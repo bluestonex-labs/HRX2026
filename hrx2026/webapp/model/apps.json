@@ -1,0 +1,58 @@
+{
+  "user": {
+    "name": "",
+    "initials": "",
+    "roleLabel": "",
+    "isManager": false
+  },
+  "page": {
+    "title": "Home"
+  },
+  "healthStrip": [],
+  "explorerApps": [
+    {
+      "title": "My Timesheet",
+      "subtitle": "Log and submit weekly hours",
+      "icon": "sap-icon://history",
+      "route": "timesheet"
+    },
+    {
+      "title": "My Leave",
+      "subtitle": "Request and track time off",
+      "icon": "sap-icon://calendar",
+      "route": "leave"
+    },
+    {
+      "title": "Team Calendar",
+      "subtitle": "See who is out across the team",
+      "icon": "sap-icon://appointment-2",
+      "route": "teamcal"
+    }
+  ],
+  "adminSections": [
+    {
+      "title": "Manage Resources",
+      "subtitle": "Staff, contractors and targets",
+      "icon": "sap-icon://employee",
+      "route": "resources"
+    },
+    {
+      "title": "Manage Clients",
+      "subtitle": "Client details, SLAs and licensed apps",
+      "icon": "sap-icon://building",
+      "route": "clients"
+    },
+    {
+      "title": "Manage Projects",
+      "subtitle": "Projects, resourcing and attachments",
+      "icon": "sap-icon://project-definition-triangle-2",
+      "route": "projects"
+    },
+    {
+      "title": "Missing Timesheets",
+      "subtitle": "Who has not booked their time",
+      "icon": "sap-icon://alert",
+      "route": "missingtimesheets"
+    }
+  ]
+}

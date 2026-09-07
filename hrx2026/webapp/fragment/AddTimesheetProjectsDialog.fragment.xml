@@ -1,0 +1,44 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+
+	<Dialog
+		id="addTimesheetProjectsDialog"
+		title="{i18n>tsAddProjectsTitle}"
+		contentWidth="38rem"
+		contentHeight="26rem"
+		resizable="true"
+		busy="{tsView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<Table
+				id="addProjectsTable"
+				items="{ts>/available}"
+				mode="MultiSelect"
+				growing="true"
+				growingThreshold="50"
+				noDataText="{i18n>tsNoAvailableProjects}">
+				<columns>
+					<Column><Text text="{i18n>tsColProject}" /></Column>
+					<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>tsColClient}" /></Column>
+					<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>tsColType}" /></Column>
+				</columns>
+				<items>
+					<ColumnListItem>
+						<cells>
+							<ObjectIdentifier title="{ts>ProjectDesc}" text="{ts>ProjectID}" />
+							<Text text="{ts>ClientDesc}" />
+							<Text text="{ts>ProjectTypeText}" />
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table>
+		</content>
+		<beginButton>
+			<Button id="addProjectsConfirm" text="{i18n>tsAddProjectsConfirm}" type="Emphasized" press=".onConfirmAddProjects" />
+		</beginButton>
+		<endButton>
+			<Button id="addProjectsCancel" text="{i18n>tsCancel}" press=".onCancelAddProjects" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

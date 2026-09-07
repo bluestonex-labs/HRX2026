@@ -1,0 +1,445 @@
+<mvc:View
+	controllerName="bsx.hrx.hrx2026.controller.ManageProjects"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:f="sap.f"
+	xmlns:form="sap.ui.layout.form"
+	xmlns:u="sap.ui.unified"
+	xmlns:core="sap.ui.core"
+	displayBlock="true"
+	height="100%"
+	class="hrxManageProjects">
+
+	<f:FlexibleColumnLayout
+		id="projectsLayout"
+		layout="{mpView>/layout}"
+		backgroundDesign="Solid">
+
+		<!-- ============================= list column ============================= -->
+		<f:beginColumnPages>
+			<Page id="projectListPage" title="{mpView>/title}" showNavButton="false">
+				<subHeader>
+					<OverflowToolbar id="projectListToolbar">
+						<SearchField
+							id="projectSearch"
+							value="{mpView>/searchQuery}"
+							liveChange=".onSearch"
+							search=".onSearch"
+							placeholder="{i18n>mpSearchPlaceholder}"
+							width="100%">
+							<layoutData>
+								<OverflowToolbarLayoutData minWidth="140px" shrinkable="true" priority="NeverOverflow" />
+							</layoutData>
+						</SearchField>
+						<Button
+							id="projectFilterButton"
+							icon="sap-icon://filter"
+							type="Transparent"
+							tooltip="{i18n>mpFilterTooltip}"
+							press=".onOpenFilter" />
+						<Button
+							id="projectAddButton"
+							icon="sap-icon://add"
+							type="Transparent"
+							tooltip="{i18n>mpAddTooltip}"
+							press=".onOpenAddProject" />
+						<Button
+							id="projectRefreshButton"
+							icon="sap-icon://refresh"
+							type="Transparent"
+							tooltip="{i18n>mpRefreshTooltip}"
+							press=".onRefresh" />
+					</OverflowToolbar>
+				</subHeader>
+
+				<List
+					id="projectList"
+					class="hrxResourceListPad"
+					items="{mp>/projects}"
+					mode="SingleSelectMaster"
+					busy="{mpView>/listBusy}"
+					busyIndicatorDelay="0"
+					noDataText="{i18n>mpListNoData}"
+					growing="true"
+					growingThreshold="40"
+					growingScrollToLoad="true"
+					selectionChange=".onProjectSelect">
+					<items>
+						<CustomListItem
+							type="Active"
+							press=".onProjectPress"
+							selected="{= ${mp>ProjectKey} === ${mpView>/selectedId} }">
+							<HBox width="100%" alignItems="Center" justifyContent="SpaceBetween" class="hrxResourceRow">
+								<VBox>
+									<Text text="{mp>ProjectDesc}" class="hrxResourceName" />
+									<Text text="{mp>ClientDesc}" class="hrxResourceMeta" />
+									<Text text="{mp>ProjectKey}" class="hrxResourceMeta" />
+								</VBox>
+								<VBox alignItems="End" class="sapUiTinyMarginBegin">
+									<ObjectStatus
+										text="{= ${mp>IsTimeBookingAllowed} === 'Y' ? ${i18n>mpStatusOpen} : ${i18n>mpStatusClosed} }"
+										state="{= ${mp>IsTimeBookingAllowed} === 'Y' ? 'Success' : 'Warning' }" />
+									<Text
+										class="hrxResourceMeta"
+										text="{parts: ['mp>StartDate', 'mp>EndDate'], formatter: '.formatter.dateRange'}" />
+								</VBox>
+							</HBox>
+						</CustomListItem>
+					</items>
+				</List>
+			</Page>
+		</f:beginColumnPages>
+
+		<!-- ============================ detail column ============================ -->
+		<f:midColumnPages>
+			<Page
+				id="projectDetailPage"
+				busy="{= ${mpView>/detailBusy} || ${mpView>/saving} }"
+				busyIndicatorDelay="0">
+				<customHeader>
+					<Bar>
+						<contentLeft>
+							<Button
+								icon="sap-icon://nav-back"
+								type="Transparent"
+								tooltip="{i18n>mpCloseTooltip}"
+								press=".onCloseDetail"
+								visible="{device>/system/phone}" />
+						</contentLeft>
+						<contentMiddle>
+							<Title text="{mpDetail>/ProjectDesc}" level="H2" />
+						</contentMiddle>
+						<contentRight>
+							<Button
+								icon="{= ${mpView>/fullScreen} ? 'sap-icon://exit-full-screen' : 'sap-icon://full-screen' }"
+								type="Transparent"
+								tooltip="{i18n>mpFullScreenTooltip}"
+								press=".onToggleFullScreen"
+								visible="{= !${device>/system/phone} }" />
+							<Button
+								icon="sap-icon://decline"
+								type="Transparent"
+								tooltip="{i18n>mpCloseTooltip}"
+								press=".onCloseDetail"
+								visible="{= !${device>/system/phone} }" />
+						</contentRight>
+					</Bar>
+				</customHeader>
+
+				<content>
+					<HBox alignItems="Center" class="sapUiSmallMargin">
+						<core:Icon src="sap-icon://project-definition-triangle-2" size="2rem" class="sapUiMediumMarginEnd hrxProjectIcon" />
+						<VBox>
+							<Title text="{mpDetail>/ProjectDesc}" level="H3" />
+							<Text text="{mpDetail>/ClientDesc}" class="hrxResourceMeta" />
+							<HBox alignItems="Center" class="sapUiTinyMarginTop">
+								<ObjectStatus
+									text="{= ${mpDetail>/IsTimeBookingAllowed} === 'Y' ? ${i18n>mpStatusOpen} : ${i18n>mpStatusClosed} }"
+									state="{= ${mpDetail>/IsTimeBookingAllowed} === 'Y' ? 'Success' : 'Warning' }"
+									class="sapUiTinyMarginEnd" />
+								<Text text="{mpDetail>/ProjectKey}" class="hrxResourceMeta" />
+							</HBox>
+						</VBox>
+					</HBox>
+
+					<IconTabBar
+						id="projectTabs"
+						expandable="false"
+						selectedKey="{mpView>/selectedTab}"
+						select=".onTabSelect"
+						class="sapUiResponsiveContentPadding">
+						<items>
+
+							<!-- tab: info -->
+							<IconTabFilter
+								key="info"
+								text="{i18n>mpTabInfo}"
+								icon="sap-icon://hint"
+								tooltip="{i18n>mpTabInfo}">
+								<form:SimpleForm
+									id="projectInfoForm"
+									editable="true"
+									layout="ResponsiveGridLayout"
+									labelSpanXL="4"
+									labelSpanL="4"
+									labelSpanM="4"
+									labelSpanS="12"
+									adjustLabelSpan="false"
+									emptySpanXL="0"
+									emptySpanL="1"
+									emptySpanM="0"
+									emptySpanS="0"
+									columnsXL="2"
+									columnsL="1"
+									columnsM="1"
+									singleContainerFullSize="false">
+									<form:content>
+										<core:Title text="{i18n>mpSectionBasic}" />
+
+										<Label text="{i18n>mpFieldKey}" />
+										<Text id="projectKey" text="{mpDetail>/ProjectKey}" />
+
+										<Label text="{i18n>mpFieldDesc}" required="true" />
+										<Input id="projectDesc" value="{mpDetail>/ProjectDesc}" />
+
+										<Label text="{i18n>mpFieldClient}" />
+										<Text id="projectClient" text="{mpDetail>/ClientDesc}" />
+
+										<Label text="{i18n>mpFieldType}" />
+										<ComboBox
+											id="projectType"
+											selectedKey="{mpDetail>/ProjectTypeKey}"
+											items="{mp>/projectTypes}"
+											placeholder="{i18n>mpFieldTypePlaceholder}">
+											<core:ListItem key="{mp>ProjectTypeKey}" text="{mp>ProjectTypeDesc}" />
+										</ComboBox>
+
+										<Label text="{i18n>mpFieldPriority}" />
+										<ComboBox
+											id="projectPriority"
+											selectedKey="{mpDetail>/PriorityKey}"
+											items="{mp>/priorities}"
+											showSecondaryValues="true"
+											placeholder="{i18n>mpFieldPriorityPlaceholder}">
+											<core:ListItem key="{mp>PriorityKey}" text="{mp>PriorityDesc}" additionalText="{mp>PriorityKey}" />
+										</ComboBox>
+
+										<Label text="{i18n>mpFieldManager}" />
+										<ComboBox
+											id="projectManager"
+											selectedKey="{mpDetail>/ProjectManagerID}"
+											items="{mp>/managers}"
+											showSecondaryValues="true"
+											placeholder="{i18n>mpFieldManagerPlaceholder}">
+											<core:ListItem key="{mp>EmpID}" text="{mp>FullName}" additionalText="{mp>EmpID}" />
+										</ComboBox>
+
+										<Label text="{i18n>mpFieldAreas}" />
+										<MultiComboBox
+											id="projectAreas"
+											selectedKeys="{mpDetail>/taskKeys}"
+											items="{mp>/tasks}"
+											placeholder="{i18n>mpFieldAreasPlaceholder}">
+											<core:Item key="{mp>TaskKey}" text="{mp>TaskDesc}" />
+										</MultiComboBox>
+
+										<core:Title text="{i18n>mpSectionCommercials}" />
+
+										<Label text="{i18n>mpFieldPoNumber}" />
+										<Input id="projectPoNumber" value="{mpDetail>/PONumber}" />
+
+										<Label text="{i18n>mpFieldPoValue}" />
+										<Input id="projectPoValue" value="{mpDetail>/POValue}" type="Number" description="GBP" />
+
+										<Label text="{i18n>mpFieldBillableDays}" />
+										<Input id="projectBillableDays" value="{mpDetail>/TotBillableDays}" type="Number" />
+
+										<Label text="{i18n>mpFieldStartDate}" />
+										<DatePicker id="projectStartDate" dateValue="{mpDetail>/StartDate}" valueFormat="yyyy-MM-dd" />
+
+										<Label text="{i18n>mpFieldEndDate}" />
+										<DatePicker id="projectEndDate" dateValue="{mpDetail>/EndDate}" valueFormat="yyyy-MM-dd" />
+
+										<Label text="{i18n>mpFieldTimeBooking}" />
+										<Switch id="projectTimeBooking" state="{mpDetail>/TimeBooking}" type="AcceptReject" />
+									</form:content>
+								</form:SimpleForm>
+
+								<Toolbar design="Transparent">
+									<ToolbarSpacer />
+									<Button
+										id="projectSaveButton"
+										text="{i18n>mpSave}"
+										icon="sap-icon://save"
+										type="Emphasized"
+										press=".onSaveProject" />
+								</Toolbar>
+							</IconTabFilter>
+
+							<!-- tab: resourcing -->
+							<IconTabFilter
+								key="resourcing"
+								text="{i18n>mpTabResourcing}"
+								icon="sap-icon://group"
+								tooltip="{i18n>mpTabResourcing}">
+								<Table
+									id="projectAssignmentTable"
+									items="{mpTabs>/assignments}"
+									busy="{mpView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mpNoAssignments}"
+									alternateRowColors="true"
+									growing="true"
+									growingScrollToLoad="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mpAssignmentsTitle}" level="H3" />
+											<ToolbarSpacer />
+											<Button
+												icon="sap-icon://add-employee"
+												tooltip="{i18n>mpAddAssignment}"
+												press=".onAddAssignment" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column><Text text="{i18n>mpColResource}" /></Column>
+										<Column minScreenWidth="Desktop" demandPopin="true"><Text text="{i18n>mpColAreas}" /></Column>
+										<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mpColRate}" /></Column>
+										<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mpColCost}" /></Column>
+										<Column hAlign="Center" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mpColStatus}" /></Column>
+										<Column hAlign="End" width="6rem"><Text text="" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem>
+											<cells>
+												<HBox alignItems="Center">
+													<f:Avatar
+														displaySize="XS"
+														backgroundColor="Accent6"
+														src="{path: 'mpTabs>Pic', formatter: '.formatter.imageSrc'}"
+														initials="{parts: ['mpTabs>Fname', 'mpTabs>Lname'], formatter: '.formatter.initials'}"
+														class="sapUiTinyMarginEnd" />
+													<VBox>
+														<Text text="{mpTabs>FullName}" />
+														<Text text="{path: 'mpTabs>Email', formatter: '.formatter.clean'}" class="hrxResourceMeta" />
+													</VBox>
+												</HBox>
+												<HBox wrap="Wrap" items="{mpTabs>TaskAssigned}">
+													<ObjectStatus text="{mpTabs>TaskDesc}" class="sapUiTinyMarginEnd" />
+												</HBox>
+												<Text text="{mpTabs>BillableDays} × {path: 'mpTabs>DayRate', formatter: '.formatter.money'}" />
+												<Text text="{path: 'mpTabs>TotalCharge', formatter: '.formatter.money'}" />
+												<ObjectStatus
+													text="{path: 'mpTabs>IsActive', formatter: '.formatter.activeText'}"
+													state="{path: 'mpTabs>IsActive', formatter: '.formatter.activeState'}" />
+												<HBox>
+													<Button
+														icon="sap-icon://edit"
+														type="Transparent"
+														tooltip="{i18n>mpEditAssignment}"
+														press=".onEditAssignment" />
+													<Button
+														icon="sap-icon://sys-cancel"
+														type="Transparent"
+														tooltip="{i18n>mpReleaseAssignment}"
+														press=".onReleaseAssignment"
+														visible="{= ${mpTabs>IsActive} === 'Y' }" />
+												</HBox>
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+
+							<!-- tab: client support team -->
+							<IconTabFilter
+								key="clientteam"
+								text="{i18n>mpTabClientTeam}"
+								icon="sap-icon://account"
+								tooltip="{i18n>mpTabClientTeam}">
+								<Table
+									id="projectSupportTable"
+									items="{mpTabs>/supportTeam}"
+									busy="{mpView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mpNoSupportTeam}"
+									alternateRowColors="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mpSupportTeamTitle}" level="H3" />
+											<ToolbarSpacer />
+											<Button
+												icon="sap-icon://add-employee"
+												tooltip="{i18n>mpAddSupportUser}"
+												press=".onAddSupportUser" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column><Text text="{i18n>mpColUser}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mpColEmail}" /></Column>
+										<Column hAlign="Center" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mpColStatus}" /></Column>
+										<Column hAlign="End" width="4rem"><Text text="" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem>
+											<cells>
+												<Text text="{mpTabs>FName} {mpTabs>LName}" />
+												<Text text="{path: 'mpTabs>Email', formatter: '.formatter.clean'}" />
+												<ObjectStatus
+													text="{path: 'mpTabs>IsActive', formatter: '.formatter.activeText'}"
+													state="{path: 'mpTabs>IsActive', formatter: '.formatter.activeState'}" />
+												<Button
+													icon="sap-icon://edit"
+													type="Transparent"
+													tooltip="{i18n>mpEditSupportUser}"
+													press=".onEditSupportUser" />
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+
+							<!-- tab: attachments -->
+							<IconTabFilter
+								key="attachments"
+								text="{i18n>mpTabAttachments}"
+								icon="sap-icon://attachment"
+								tooltip="{i18n>mpTabAttachments}">
+								<Table
+									id="projectAttachmentTable"
+									items="{mpTabs>/attachments}"
+									busy="{mpView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mpNoAttachments}"
+									alternateRowColors="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mpAttachmentsTitle}" level="H3" />
+											<ToolbarSpacer />
+											<u:FileUploader
+												id="projectAttachmentUploader"
+												name="projectAttachment"
+												uploadUrl=""
+												buttonOnly="true"
+												buttonText="{i18n>mpAddAttachment}"
+												icon="sap-icon://add"
+												change=".onAttachmentChange"
+												typeMissmatch=".onAttachmentTypeMismatch" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column><Text text="{i18n>mpColFile}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mpColUploaded}" /></Column>
+										<Column hAlign="End" width="6rem"><Text text="" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem>
+											<cells>
+												<ObjectIdentifier
+													title="{mpTabs>FileName}"
+													text="{path: 'mpTabs>FileType', formatter: '.formatter.clean'}" />
+												<Text text="{path: 'mpTabs>UploadedOn', formatter: '.formatter.date'}" />
+												<HBox>
+													<Button
+														icon="sap-icon://download"
+														type="Transparent"
+														tooltip="{i18n>mpDownloadAttachment}"
+														press=".onDownloadAttachment" />
+													<Button
+														icon="sap-icon://delete"
+														type="Transparent"
+														tooltip="{i18n>mpDeleteAttachment}"
+														press=".onDeleteAttachment" />
+												</HBox>
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+						</items>
+					</IconTabBar>
+				</content>
+			</Page>
+		</f:midColumnPages>
+	</f:FlexibleColumnLayout>
+</mvc:View>

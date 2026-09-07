@@ -1,0 +1,113 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="addProjectDialog"
+		title="{i18n>mpAddTitle}"
+		contentWidth="40rem"
+		busy="{mpView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="addProjectForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<core:Title text="{i18n>mpSectionBasic}" />
+
+					<Label text="{i18n>mpFieldDesc}" required="true" />
+					<Input id="newProjectDesc" value="{mpForm>/ProjectDesc}" placeholder="{i18n>mpFieldDescPlaceholder}" />
+
+					<Label text="{i18n>mpFieldClient}" required="true" />
+					<ComboBox
+						id="newProjectClient"
+						selectedKey="{mpForm>/ClientKey}"
+						items="{mp>/clients}"
+						showSecondaryValues="true"
+						placeholder="{i18n>mpFieldClientPlaceholder}">
+						<core:ListItem key="{mp>ClientKey}" text="{mp>ClientDesc}" additionalText="{mp>ClientLocation}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldType}" required="true" />
+					<ComboBox
+						id="newProjectType"
+						selectedKey="{mpForm>/ProjectTypeKey}"
+						items="{mp>/projectTypes}"
+						placeholder="{i18n>mpFieldTypePlaceholder}">
+						<core:ListItem key="{mp>ProjectTypeKey}" text="{mp>ProjectTypeDesc}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldPriority}" />
+					<ComboBox
+						id="newProjectPriority"
+						selectedKey="{mpForm>/PriorityKey}"
+						items="{mp>/priorities}"
+						showSecondaryValues="true"
+						placeholder="{i18n>mpFieldPriorityPlaceholder}">
+						<core:ListItem key="{mp>PriorityKey}" text="{mp>PriorityDesc}" additionalText="{mp>PriorityKey}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldManager}" />
+					<ComboBox
+						id="newProjectManager"
+						selectedKey="{mpForm>/ProjectManagerID}"
+						items="{mp>/managers}"
+						showSecondaryValues="true"
+						placeholder="{i18n>mpFieldManagerPlaceholder}">
+						<core:ListItem key="{mp>EmpID}" text="{mp>FullName}" additionalText="{mp>EmpID}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldAreas}" />
+					<MultiComboBox
+						id="newProjectAreas"
+						selectedKeys="{mpForm>/taskKeys}"
+						items="{mp>/tasks}"
+						placeholder="{i18n>mpFieldAreasPlaceholder}">
+						<core:Item key="{mp>TaskKey}" text="{mp>TaskDesc}" />
+					</MultiComboBox>
+
+					<core:Title text="{i18n>mpSectionCommercials}" />
+
+					<Label text="{i18n>mpFieldPoNumber}" />
+					<Input id="newProjectPoNumber" value="{mpForm>/PONumber}" placeholder="{i18n>mpFieldPoNumberPlaceholder}" />
+
+					<Label text="{i18n>mpFieldPoValue}" />
+					<Input id="newProjectPoValue" value="{mpForm>/POValue}" type="Number" description="GBP" />
+
+					<Label text="{i18n>mpFieldBillableDays}" />
+					<Input id="newProjectBillableDays" value="{mpForm>/TotBillableDays}" type="Number" />
+
+					<Label text="{i18n>mpFieldStartDate}" />
+					<DatePicker id="newProjectStartDate" dateValue="{mpForm>/StartDate}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mpFieldEndDate}" />
+					<DatePicker id="newProjectEndDate" dateValue="{mpForm>/EndDate}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mpFieldTimeBooking}" />
+					<Switch id="newProjectTimeBooking" state="{mpForm>/TimeBooking}" type="AcceptReject" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="newProjectConfirm" text="{i18n>mpAddConfirm}" type="Emphasized" press=".onCreateProject" />
+		</beginButton>
+		<endButton>
+			<Button id="newProjectCancel" text="{i18n>mpCancel}" press=".onCancelAddProject" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

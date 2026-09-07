@@ -1,0 +1,57 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="supportUserDialog"
+		title="{= ${mpForm>/mode} === 'edit' ? ${i18n>mpEditSupportUserTitle} : ${i18n>mpAddSupportUserTitle} }"
+		contentWidth="32rem"
+		busy="{mpView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="supportUserForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mpFieldUser}" required="true" visible="{= ${mpForm>/mode} !== 'edit' }" />
+					<ComboBox
+						id="supportUser"
+						selectedKey="{mpForm>/UserID}"
+						items="{mpTabs>/clientUsers}"
+						showSecondaryValues="true"
+						visible="{= ${mpForm>/mode} !== 'edit' }"
+						placeholder="{i18n>mpFieldUserPlaceholder}">
+						<core:ListItem key="{mpTabs>UserID}" text="{mpTabs>FName} {mpTabs>LName}" additionalText="{mpTabs>Email}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldUser}" visible="{= ${mpForm>/mode} === 'edit' }" />
+					<Text id="supportUserName" text="{mpForm>/UserName}" visible="{= ${mpForm>/mode} === 'edit' }" />
+
+					<Label text="{i18n>mpFieldActive}" />
+					<Switch id="supportUserActive" state="{mpForm>/IsActive}" type="AcceptReject" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="supportUserConfirm" text="{i18n>mpSave}" type="Emphasized" press=".onSaveSupportUser" />
+		</beginButton>
+		<endButton>
+			<Button id="supportUserCancel" text="{i18n>mpCancel}" press=".onCancelSupportUser" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

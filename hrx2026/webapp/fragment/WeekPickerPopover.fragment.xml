@@ -1,0 +1,17 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:u="sap.ui.unified">
+
+	<Popover
+		id="timesheetWeekPopover"
+		title="{i18n>tsPickWeek}"
+		placement="Bottom"
+		class="sapUiContentPadding">
+		<u:Calendar
+			id="weekPickerCalendar"
+			singleSelection="true"
+			showWeekNumbers="true"
+			select=".onWeekPicked" />
+	</Popover>
+</core:FragmentDefinition>

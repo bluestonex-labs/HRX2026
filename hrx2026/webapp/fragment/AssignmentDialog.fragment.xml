@@ -1,0 +1,83 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="assignmentDialog"
+		title="{= ${mpForm>/mode} === 'edit' ? ${i18n>mpEditAssignmentTitle} : ${i18n>mpAddAssignmentTitle} }"
+		contentWidth="34rem"
+		busy="{mpView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="assignmentForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="5"
+				labelSpanL="5"
+				labelSpanM="5"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mpFieldResource}" required="true" />
+					<ComboBox
+						id="assignmentResource"
+						selectedKey="{mpForm>/EmpID}"
+						items="{mp>/managers}"
+						showSecondaryValues="true"
+						enabled="{= ${mpForm>/mode} !== 'edit' }"
+						placeholder="{i18n>mpFieldResourcePlaceholder}">
+						<core:ListItem key="{mp>EmpID}" text="{mp>FullName}" additionalText="{mp>EmpID}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldBillingScheme}" required="true" />
+					<ComboBox
+						id="assignmentBilling"
+						selectedKey="{mpForm>/BillingID}"
+						items="{mp>/billing}"
+						showSecondaryValues="true"
+						selectionChange=".onBillingSchemeChange"
+						placeholder="{i18n>mpFieldBillingSchemePlaceholder}">
+						<core:ListItem
+							key="{mp>BillingID}"
+							text="{mp>BillingDesc}"
+							additionalText="{path: 'mp>DayRate', formatter: '.formatter.money'}" />
+					</ComboBox>
+
+					<Label text="{i18n>mpFieldDayRate}" required="true" />
+					<Input id="assignmentDayRate" value="{mpForm>/DayRate}" type="Number" description="GBP" />
+
+					<Label text="{i18n>mpFieldBillableDays}" required="true" />
+					<Input id="assignmentDays" value="{mpForm>/BillableDays}" type="Number" />
+
+					<Label text="{i18n>mpFieldStartDate}" />
+					<DatePicker id="assignmentStartDate" dateValue="{mpForm>/StartDate}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mpFieldAreas}" />
+					<MultiComboBox
+						id="assignmentAreas"
+						selectedKeys="{mpForm>/taskKeys}"
+						items="{mpDetail>/projectTasks}"
+						placeholder="{i18n>mpFieldAssignmentAreasPlaceholder}">
+						<core:Item key="{mpDetail>TaskKey}" text="{mpDetail>TaskDesc}" />
+					</MultiComboBox>
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="assignmentConfirm" text="{i18n>mpSave}" type="Emphasized" press=".onSaveAssignment" />
+		</beginButton>
+		<endButton>
+			<Button id="assignmentCancel" text="{i18n>mpCancel}" press=".onCancelAssignment" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

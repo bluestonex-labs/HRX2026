@@ -1,0 +1,58 @@
+<mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:tnt="sap.tnt" controllerName="bsx.hrx.hrx2026.controller.App" displayBlock="true" height="100%">
+	<tnt:ToolPage id="toolPage" class="hrxToolPage">
+		<tnt:header>
+			<!-- sap.tnt.SideNavigation has no slot of its own for a logo/toggle row, so
+			     this lives here and CSS lays it over the rail - the header wrapper is
+			     the one ancestor that isn't clipped by the main content's overflow. -->
+			<Button id="navToggleButton" press="onMenuButtonPress" type="Transparent" tooltip="{i18n>navToggle}" class="hrxNavToggle" icon="sap-icon://nav-back"/>
+		</tnt:header>
+		<tnt:sideContent>
+			<tnt:SideNavigation id="sideNavigation" itemSelect="onItemSelect">
+				<tnt:NavigationList selectedKey="home">
+					<tnt:NavigationListItem key="home" text="{i18n>navHome}" icon="sap-icon://home"/>
+					<tnt:NavigationListItem key="timesheet" text="{i18n>navTimesheet}" icon="sap-icon://history"/>
+					<tnt:NavigationListItem key="leave" text="{i18n>navLeave}" icon="sap-icon://calendar"/>
+					<tnt:NavigationListItem key="teamcal" text="{i18n>navTeamCalendar}" icon="sap-icon://appointment-2"/>
+					<tnt:NavigationListItem key="explorer" text="{i18n>navAppExplorer}" icon="sap-icon://grid"/>
+					<!-- Everything else is reached from the App Explorer. Admin belongs to
+					     managers only, which the shell decides from the signed-in profile. -->
+					<tnt:NavigationListItem key="admin" text="{i18n>navAdmin}" icon="sap-icon://action-settings" visible="{app>/user/isManager}"/>
+				</tnt:NavigationList>
+			</tnt:SideNavigation>
+		</tnt:sideContent>
+		<tnt:mainContents>
+			<!-- One header bar for the app: the launchpad shell already provides the bar
+			     above it, so the page name and the health strip live here rather than in
+			     a second tool header. -->
+			<VBox fitContainer="true" class="hrxMainStack">
+				<VBox class="hrxCrumbBar">
+					<HBox alignItems="Center" justifyContent="SpaceBetween">
+						<VBox justifyContent="Center">
+							<Text text="{i18n>appEyebrow}" class="hrxEyebrow"/>
+							<Title text="{app>/page/title}" level="H1" class="hrxPageTitle"/>
+						</VBox>
+						<!--<Avatar
+							id="profileAvatar"
+							initials="{app>/user/initials}"
+							displaySize="S"
+							backgroundColor="Accent6"
+							tooltip="{app>/user/name}"
+							press="onProfilePress"
+							class="hrxProfileAvatar" />-->
+					</HBox>
+
+					<!-- The strip summarises the signed-in user's own week, so it belongs to
+					     the home page rather than to every screen. -->
+					<HBox wrap="Wrap" class="hrxHealthStrip" visible="{app>/page/showStrip}" items="{app>/healthStrip}">
+						<ObjectStatus text="{app>text}" state="{app>state}" class="hrxPill sapUiTinyMarginEnd"/>
+					</HBox>
+				</VBox>
+				<NavContainer id="appNavContainer" height="100%">
+					<layoutData>
+						<FlexItemData growFactor="1" baseSize="0%"/>
+					</layoutData>
+				</NavContainer>
+			</VBox>
+		</tnt:mainContents>
+	</tnt:ToolPage>
+</mvc:View>

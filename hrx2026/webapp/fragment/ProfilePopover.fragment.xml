@@ -1,0 +1,25 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+	<Popover
+		id="profilePopover"
+		showHeader="false"
+		placement="Bottom"
+		class="hrxProfilePopover">
+		<VBox class="sapUiSmallMargin" alignItems="Center">
+			<Avatar
+				initials="{app>/user/initials}"
+				displaySize="M"
+				backgroundColor="Accent6"
+				class="sapUiTinyMarginBottom" />
+			<Title text="{app>/user/name}" level="H3" />
+			<Text text="{app>/user/empID}" class="hrxResourceMeta" />
+			<Text text="{app>/user/email}" class="hrxResourceMeta sapUiTinyMarginTop" />
+			<ObjectStatus
+				text="{i18n>profileManager}"
+				state="Information"
+				visible="{app>/user/isManager}"
+				class="sapUiSmallMarginTop" />
+		</VBox>
+	</Popover>
+</core:FragmentDefinition>

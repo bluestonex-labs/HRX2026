@@ -1,0 +1,67 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:u="sap.ui.unified"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="addClientDialog"
+		title="{i18n>mcAddTitle}"
+		contentWidth="36rem"
+		busy="{mcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="addClientForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mcFieldName}" required="true" />
+					<Input id="newClientName" value="{mcForm>/ClientDesc}" placeholder="{i18n>mcFieldNamePlaceholder}" />
+
+					<Label text="{i18n>mcFieldLocation}" />
+					<Input id="newClientLocation" value="{mcForm>/ClientLocation}" placeholder="{i18n>mcFieldLocationPlaceholder}" />
+
+					<Label text="{i18n>mcFieldContactName}" />
+					<Input id="newClientContact" value="{mcForm>/ClientContactName}" placeholder="{i18n>mcFieldContactNamePlaceholder}" />
+
+					<Label text="{i18n>mcFieldContactEmail}" />
+					<Input id="newClientEmail" value="{mcForm>/ClientContactEmail}" type="Email" placeholder="{i18n>mcFieldContactEmailPlaceholder}" />
+
+					<Label text="{i18n>mcFieldContactPhone}" />
+					<Input id="newClientPhone" value="{mcForm>/ClientContactMobile}" type="Tel" placeholder="{i18n>mcFieldContactPhonePlaceholder}" />
+
+					<Label text="{i18n>mcFieldLogo}" />
+					<u:FileUploader
+						id="newClientLogoUploader"
+						name="newClientLogo"
+						uploadUrl=""
+						width="100%"
+						fileType="png,jpg,jpeg"
+						placeholder="{i18n>mcLogoPlaceholder}"
+						change=".onNewLogoChange"
+						typeMissmatch=".onLogoTypeMismatch" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="newClientConfirm" text="{i18n>mcAddConfirm}" type="Emphasized" press=".onCreateClient" />
+		</beginButton>
+		<endButton>
+			<Button id="newClientCancel" text="{i18n>mcCancel}" press=".onCancelAddClient" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

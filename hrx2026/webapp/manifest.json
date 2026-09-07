@@ -1,0 +1,233 @@
+{
+  "_version": "1.86.0",
+  "sap.app": {
+    "id": "bsx.hrx.hrx2026",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.29.0",
+      "toolsId": "66332a0b-a8e4-42c2-8280-b88db765ceb1"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "services/services.xsodata/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/mainService/metadata.xml",
+          "odataVersion": "2.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "hrxsuite-display": {
+          "semanticObject": "hrxsuite",
+          "action": "display",
+          "title": "{{hrxsuite-display.flpTitle}}",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.150.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.f": {},
+        "sap.tnt": {},
+        "sap.ui.layout": {},
+        "sap.ui.unified": {},
+        "sap.suite.ui.microchart": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "bsx.hrx.hrx2026.i18n.i18n"
+        }
+      },
+      "app": {
+        "type": "sap.ui.model.json.JSONModel",
+        "uri": "model/apps.json"
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "controlAggregation": "pages",
+        "controlId": "appNavContainer",
+        "transition": "slide",
+        "type": "View",
+        "viewType": "XML",
+        "path": "bsx.hrx.hrx2026.view",
+        "async": true,
+        "viewPath": "bsx.hrx.hrx2026.view"
+      },
+      "routes": [
+        {
+          "name": "home",
+          "pattern": "",
+          "target": "home"
+        },
+        {
+          "name": "timesheet",
+          "pattern": "timesheet",
+          "target": "timesheet"
+        },
+        {
+          "name": "leave",
+          "pattern": "leave",
+          "target": "leave"
+        },
+        {
+          "name": "teamcal",
+          "pattern": "teamcalendar",
+          "target": "teamcal"
+        },
+        {
+          "name": "explorer",
+          "pattern": "explorer",
+          "target": "explorer"
+        },
+        {
+          "name": "admin",
+          "pattern": "admin",
+          "target": "admin"
+        },
+        {
+          "name": "resources",
+          "pattern": "manageresources",
+          "target": "resources"
+        },
+        {
+          "name": "clients",
+          "pattern": "manageclients",
+          "target": "clients"
+        },
+        {
+          "name": "projects",
+          "pattern": "manageprojects",
+          "target": "projects"
+        },
+        {
+          "name": "missingtimesheets",
+          "pattern": "missingtimesheets",
+          "target": "missingtimesheets"
+        }
+      ],
+      "targets": {
+        "home": {
+          "viewName": "Home",
+          "viewLevel": 1,
+          "viewId": "home"
+        },
+        "timesheet": {
+          "viewName": "Timesheet",
+          "viewLevel": 1,
+          "viewId": "timesheet"
+        },
+        "leave": {
+          "viewName": "Leave",
+          "viewLevel": 1,
+          "viewId": "leave"
+        },
+        "teamcal": {
+          "viewName": "TeamCalendar",
+          "viewLevel": 1,
+          "viewId": "teamcal"
+        },
+        "explorer": {
+          "viewName": "AppExplorer",
+          "viewLevel": 1,
+          "viewId": "explorer"
+        },
+        "admin": {
+          "viewName": "Admin",
+          "viewLevel": 1,
+          "viewId": "admin"
+        },
+        "resources": {
+          "viewName": "ManageResources",
+          "viewLevel": 1,
+          "viewId": "resources"
+        },
+        "clients": {
+          "viewName": "ManageClients",
+          "viewLevel": 1,
+          "viewId": "clients"
+        },
+        "projects": {
+          "viewName": "ManageProjects",
+          "viewLevel": 1,
+          "viewId": "projects"
+        },
+        "missingtimesheets": {
+          "viewName": "MissingTimesheets",
+          "viewLevel": 1,
+          "viewId": "missingtimesheets"
+        },
+        "notFound": {
+          "viewName": "NotFound",
+          "viewId": "notFound"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "bsx.hrx.hrx2026.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "hrx2026"
+  }
+}

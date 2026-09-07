@@ -1,0 +1,455 @@
+<mvc:View
+	controllerName="bsx.hrx.hrx2026.controller.ManageClients"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:f="sap.f"
+	xmlns:form="sap.ui.layout.form"
+	xmlns:u="sap.ui.unified"
+	xmlns:core="sap.ui.core"
+	displayBlock="true"
+	height="100%"
+	class="hrxManageClients">
+
+	<f:FlexibleColumnLayout
+		id="clientsLayout"
+		layout="{mcView>/layout}"
+		backgroundDesign="Solid">
+
+		<!-- ============================= list column ============================= -->
+		<f:beginColumnPages>
+			<Page id="clientListPage" title="{mcView>/title}" showNavButton="false">
+				<subHeader>
+					<OverflowToolbar id="clientListToolbar">
+						<SearchField
+							id="clientSearch"
+							value="{mcView>/searchQuery}"
+							liveChange=".onSearch"
+							search=".onSearch"
+							placeholder="{i18n>mcSearchPlaceholder}"
+							width="100%">
+							<layoutData>
+								<OverflowToolbarLayoutData minWidth="140px" shrinkable="true" priority="NeverOverflow" />
+							</layoutData>
+						</SearchField>
+						<Button
+							id="clientAddButton"
+							icon="sap-icon://add"
+							type="Transparent"
+							tooltip="{i18n>mcAddTooltip}"
+							press=".onOpenAddClient" />
+						<Button
+							id="clientRefreshButton"
+							icon="sap-icon://refresh"
+							type="Transparent"
+							tooltip="{i18n>mcRefreshTooltip}"
+							press=".onRefresh" />
+					</OverflowToolbar>
+				</subHeader>
+
+				<List
+					id="clientList"
+					class="hrxResourceListPad"
+					items="{mc>/clients}"
+					mode="SingleSelectMaster"
+					busy="{mcView>/listBusy}"
+					busyIndicatorDelay="0"
+					noDataText="{i18n>mcListNoData}"
+					growing="true"
+					growingThreshold="40"
+					growingScrollToLoad="true"
+					selectionChange=".onClientSelect">
+					<items>
+						<CustomListItem
+							type="Active"
+							press=".onClientPress"
+							selected="{= ${mc>ClientKey} === ${mcView>/selectedId} }">
+							<HBox width="100%" alignItems="Center" justifyContent="SpaceBetween" class="hrxResourceRow">
+								<HBox alignItems="Center">
+									<f:Avatar
+										displaySize="S"
+										backgroundColor="Accent8"
+										src="{path: 'mc>ClientLogo', formatter: '.formatter.imageSrc'}"
+										imageFitType="Contain"
+										initials="{path: 'mc>ClientDesc', formatter: '.formatter.nameInitials'}"
+										class="sapUiTinyMarginEnd" />
+									<VBox>
+										<Text text="{mc>ClientDesc}" class="hrxResourceName" />
+										<Text text="{mc>ClientKey}" class="hrxResourceMeta" />
+									</VBox>
+								</HBox>
+								<VBox alignItems="End" class="sapUiTinyMarginBegin">
+									<Text text="{mc>ClientLocation}" class="hrxResourceMeta" />
+									<Text text="{mc>ClientContactName}" class="hrxResourceMeta" />
+								</VBox>
+							</HBox>
+						</CustomListItem>
+					</items>
+				</List>
+			</Page>
+		</f:beginColumnPages>
+
+		<!-- ============================ detail column ============================ -->
+		<f:midColumnPages>
+			<Page
+				id="clientDetailPage"
+				busy="{= ${mcView>/detailBusy} || ${mcView>/saving} }"
+				busyIndicatorDelay="0">
+				<customHeader>
+					<Bar>
+						<contentLeft>
+							<Button
+								icon="sap-icon://nav-back"
+								type="Transparent"
+								tooltip="{i18n>mcCloseTooltip}"
+								press=".onCloseDetail"
+								visible="{device>/system/phone}" />
+						</contentLeft>
+						<contentMiddle>
+							<Title text="{mcDetail>/ClientDesc}" level="H2" />
+						</contentMiddle>
+						<contentRight>
+							<Button
+								icon="{= ${mcView>/fullScreen} ? 'sap-icon://exit-full-screen' : 'sap-icon://full-screen' }"
+								type="Transparent"
+								tooltip="{i18n>mcFullScreenTooltip}"
+								press=".onToggleFullScreen"
+								visible="{= !${device>/system/phone} }" />
+							<Button
+								icon="sap-icon://decline"
+								type="Transparent"
+								tooltip="{i18n>mcCloseTooltip}"
+								press=".onCloseDetail"
+								visible="{= !${device>/system/phone} }" />
+						</contentRight>
+					</Bar>
+				</customHeader>
+
+				<content>
+					<HBox alignItems="Center" class="sapUiSmallMargin">
+						<f:Avatar
+							id="clientDetailLogo"
+							displaySize="L"
+							backgroundColor="Accent8"
+							src="{parts: ['mcDetail>/NewLogo', 'mcDetail>/ClientLogo'], formatter: '.formatter.pendingImageSrc'}"
+							imageFitType="Contain"
+							initials="{path: 'mcDetail>/ClientDesc', formatter: '.formatter.nameInitials'}"
+							class="sapUiMediumMarginEnd" />
+						<VBox>
+							<Title text="{mcDetail>/ClientDesc}" level="H3" />
+							<Text text="{mcDetail>/ClientKey}" class="hrxResourceMeta" />
+							<Text text="{mcDetail>/ClientLocation}" class="hrxResourceMeta" />
+						</VBox>
+					</HBox>
+
+					<IconTabBar
+						id="clientTabs"
+						expandable="false"
+						selectedKey="{mcView>/selectedTab}"
+						select=".onTabSelect"
+						class="sapUiResponsiveContentPadding">
+						<items>
+
+							<!-- tab: basic info -->
+							<IconTabFilter
+								key="basic"
+								text="{i18n>mcTabBasic}"
+								icon="sap-icon://hint"
+								tooltip="{i18n>mcTabBasic}">
+								<form:SimpleForm
+									id="clientBasicForm"
+									editable="true"
+									layout="ResponsiveGridLayout"
+									labelSpanXL="4"
+									labelSpanL="4"
+									labelSpanM="4"
+									labelSpanS="12"
+									adjustLabelSpan="false"
+									emptySpanXL="0"
+									emptySpanL="1"
+									emptySpanM="0"
+									emptySpanS="0"
+									columnsXL="2"
+									columnsL="1"
+									columnsM="1"
+									singleContainerFullSize="false">
+									<form:content>
+										<core:Title text="{i18n>mcSectionClient}" />
+
+										<Label text="{i18n>mcFieldKey}" />
+										<Text id="clientKey" text="{mcDetail>/ClientKey}" />
+
+										<Label text="{i18n>mcFieldName}" required="true" />
+										<Input id="clientName" value="{mcDetail>/ClientDesc}" />
+
+										<Label text="{i18n>mcFieldLocation}" />
+										<Input id="clientLocation" value="{mcDetail>/ClientLocation}" />
+
+										<Label text="{i18n>mcFieldLogo}" />
+										<VBox>
+											<u:FileUploader
+												id="clientLogoUploader"
+												name="clientLogo"
+												uploadUrl=""
+												width="100%"
+												fileType="png,jpg,jpeg"
+												placeholder="{i18n>mcLogoPlaceholder}"
+												tooltip="{i18n>mcLogoTooltip}"
+												change=".onLogoChange"
+												typeMissmatch=".onLogoTypeMismatch" />
+											<Button
+												text="{i18n>mcRemoveLogo}"
+												type="Transparent"
+												icon="sap-icon://delete"
+												press=".onRemoveLogo"
+												class="sapUiTinyMarginTop"
+												visible="{= !!(${mcDetail>/NewLogo} || ${mcDetail>/ClientLogo}) }" />
+										</VBox>
+
+										<core:Title text="{i18n>mcSectionContact}" />
+
+										<Label text="{i18n>mcFieldContactName}" />
+										<Input id="clientContactName" value="{mcDetail>/ClientContactName}" />
+
+										<Label text="{i18n>mcFieldContactEmail}" />
+										<Input id="clientContactEmail" value="{mcDetail>/ClientContactEmail}" type="Email" />
+
+										<Label text="{i18n>mcFieldContactPhone}" />
+										<Input id="clientContactPhone" value="{mcDetail>/ClientContactMobile}" type="Tel" />
+									</form:content>
+								</form:SimpleForm>
+
+								<Toolbar design="Transparent">
+									<ToolbarSpacer />
+									<Button
+										id="clientSaveButton"
+										text="{i18n>mcSave}"
+										icon="sap-icon://save"
+										type="Emphasized"
+										press=".onSaveClient" />
+								</Toolbar>
+							</IconTabFilter>
+
+							<!-- tab: support team -->
+							<IconTabFilter
+								key="team"
+								text="{i18n>mcTabTeam}"
+								icon="sap-icon://employee"
+								tooltip="{i18n>mcTabTeam}">
+								<Table
+									id="clientUserTable"
+									items="{mcTabs>/users}"
+									busy="{mcView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mcNoUsers}"
+									alternateRowColors="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mcUsersTitle}" level="H3" />
+											<ToolbarSpacer />
+											<Button
+												icon="sap-icon://add-employee"
+												tooltip="{i18n>mcAddUser}"
+												press=".onAddUser" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column><Text text="{i18n>mcColUser}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColEmail}" /></Column>
+										<Column hAlign="Center" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColStatus}" /></Column>
+										<Column hAlign="Center" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColAdmin}" /></Column>
+										<Column hAlign="End" width="4rem"><Text text="" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem>
+											<cells>
+												<Text text="{mcTabs>FName} {mcTabs>LName}" />
+												<Text text="{path: 'mcTabs>Email', formatter: '.formatter.clean'}" />
+												<ObjectStatus
+													text="{path: 'mcTabs>IsActive', formatter: '.formatter.activeText'}"
+													state="{path: 'mcTabs>IsActive', formatter: '.formatter.activeState'}" />
+												<core:Icon
+													src="{path: 'mcTabs>IsAdmin', formatter: '.formatter.flagIcon'}"
+													color="{= ${mcTabs>IsAdmin} === 'Y' ? 'Positive' : 'Neutral' }" />
+												<Button
+													icon="sap-icon://edit"
+													type="Transparent"
+													tooltip="{i18n>mcEditUser}"
+													press=".onEditUser" />
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+
+							<!-- tab: SLA -->
+							<IconTabFilter
+								key="sla"
+								text="{i18n>mcTabSla}"
+								icon="sap-icon://decision"
+								tooltip="{i18n>mcTabSla}">
+								<Table
+									id="clientSlaTable"
+									items="{mcTabs>/sla}"
+									busy="{mcView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mcNoSla}"
+									alternateRowColors="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mcSlaTitle}" level="H3" />
+											<ToolbarSpacer />
+											<Button
+												icon="sap-icon://add-activity-2"
+												tooltip="{i18n>mcAddSla}"
+												press=".onAddSla" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column><Text text="{i18n>mcColSeverity}" /></Column>
+										<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColResponse}" /></Column>
+										<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColResolution}" /></Column>
+										<Column hAlign="End" width="4rem"><Text text="" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem>
+											<cells>
+												<ObjectIdentifier title="{mcTabs>PriorityDesc}" text="{mcTabs>PriorityID}" />
+												<Text text="{mcTabs>ResponseSLA} {path: 'mcTabs>UoM', formatter: '.formatter.clean'}" />
+												<Text text="{mcTabs>ResolutionSLA} {path: 'mcTabs>UoM', formatter: '.formatter.clean'}" />
+												<Button
+													icon="sap-icon://edit"
+													type="Transparent"
+													tooltip="{i18n>mcEditSla}"
+													press=".onEditSla" />
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+
+							<!-- tab: components -->
+							<IconTabFilter
+								key="components"
+								text="{i18n>mcTabComponents}"
+								icon="sap-icon://responsive"
+								tooltip="{i18n>mcTabComponents}">
+								<Table
+									id="clientComponentTable"
+									items="{mcTabs>/components}"
+									busy="{mcView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mcNoComponents}"
+									alternateRowColors="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mcComponentsTitle}" level="H3" />
+											<ToolbarSpacer />
+											<Button
+												icon="sap-icon://add-activity-2"
+												tooltip="{i18n>mcAddComponent}"
+												press=".onAddComponent" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column width="18rem"><Text text="{i18n>mcColSoftware}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColValidity}" /></Column>
+										<Column hAlign="Center" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColSupported}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColSystem}" /></Column>
+										<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColCosts}" /></Column>
+										<Column hAlign="Center" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColCloud}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColMessages}" /></Column>
+										<Column hAlign="End" width="6rem"><Text text="" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem highlight="{= ${mcTabs>ShowError} === '1' ? 'Error' : 'None' }">
+											<cells>
+												<VBox>
+													<ObjectIdentifier title="{mcTabs>AppName}" text="{mcTabs>ComponentName}" />
+													<Text text="{path: 'mcTabs>SubComponentName', formatter: '.formatter.clean'}" class="hrxResourceMeta" />
+												</VBox>
+												<Text text="{parts: ['mcTabs>ValidFrom', 'mcTabs>ValidTill'], formatter: '.formatter.dateRange'}" />
+												<core:Icon
+													src="{path: 'mcTabs>IsSupported', formatter: '.formatter.flagIcon'}"
+													color="{= ${mcTabs>IsSupported} === 'Y' ? 'Positive' : 'Negative' }" />
+												<VBox>
+													<Text text="{path: 'mcTabs>SystemNo', formatter: '.formatter.clean'}" />
+													<Text text="{path: 'mcTabs>SAPVersion', formatter: '.formatter.clean'}" class="hrxResourceMeta" />
+													<Text text="{path: 'mcTabs>InstallDate', formatter: '.formatter.date'}" class="hrxResourceMeta" />
+												</VBox>
+												<VBox alignItems="End">
+													<Text text="{path: 'mcTabs>ObjectCost', formatter: '.formatter.money'}" />
+													<Text text="{path: 'mcTabs>SupportCost', formatter: '.formatter.money'}" class="hrxResourceMeta" />
+												</VBox>
+												<core:Icon
+													src="{path: 'mcTabs>IsCloudCustomer', formatter: '.formatter.flagIcon'}"
+													color="{= ${mcTabs>IsCloudCustomer} === 'Y' ? 'Positive' : 'Negative' }" />
+												<VBox>
+													<ObjectStatus
+														text="{path: 'mcTabs>WarningMessage', formatter: '.formatter.clean'}"
+														state="{= ${mcTabs>ShowWarning} === '1' ? 'Warning' : 'None' }" />
+													<Text text="{path: 'mcTabs>HardMessage', formatter: '.formatter.clean'}" class="hrxResourceMeta" />
+												</VBox>
+												<HBox>
+													<Button
+														icon="sap-icon://edit"
+														type="Transparent"
+														tooltip="{i18n>mcEditComponent}"
+														press=".onEditComponent" />
+													<Button
+														icon="sap-icon://delete"
+														type="Transparent"
+														tooltip="{i18n>mcDeleteComponent}"
+														press=".onDeleteComponent" />
+												</HBox>
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+
+							<!-- tab: application services -->
+							<IconTabFilter
+								key="services"
+								text="{i18n>mcTabServices}"
+								icon="sap-icon://crm-service-manager"
+								tooltip="{i18n>mcTabServices}">
+								<Table
+									id="clientServiceTable"
+									items="{mcTabs>/services}"
+									busy="{mcView>/tabBusy}"
+									busyIndicatorDelay="0"
+									noDataText="{i18n>mcNoServices}"
+									alternateRowColors="true">
+									<headerToolbar>
+										<Toolbar>
+											<Title text="{i18n>mcServicesTitle}" level="H3" />
+											<ToolbarSpacer />
+											<Button
+												icon="sap-icon://add-activity-2"
+												tooltip="{i18n>mcAddService}"
+												press=".onAddService" />
+										</Toolbar>
+									</headerToolbar>
+									<columns>
+										<Column><Text text="{i18n>mcColApp}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColService}" /></Column>
+										<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mcColValidity}" /></Column>
+									</columns>
+									<items>
+										<ColumnListItem>
+											<cells>
+												<Text text="{mcTabs>AppID}" />
+												<ObjectIdentifier title="{mcTabs>ServiceDesc}" text="{mcTabs>ServiceID}" />
+												<Text text="{parts: ['mcTabs>ValidFrom', 'mcTabs>ValidTill'], formatter: '.formatter.dateRange'}" />
+											</cells>
+										</ColumnListItem>
+									</items>
+								</Table>
+							</IconTabFilter>
+						</items>
+					</IconTabBar>
+				</content>
+			</Page>
+		</f:midColumnPages>
+	</f:FlexibleColumnLayout>
+</mvc:View>

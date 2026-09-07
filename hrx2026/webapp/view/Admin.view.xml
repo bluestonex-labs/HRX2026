@@ -1,0 +1,33 @@
+<mvc:View
+	controllerName="bsx.hrx.hrx2026.controller.Admin"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:f="sap.f"
+	displayBlock="true">
+	<Page id="adminPage" showHeader="false" showNavButton="false" class="hrxPageContent">
+
+		<!-- Manager rights come from the signed-in profile, so a direct link to this
+		     page still lands on the notice rather than on the tools. -->
+		<IllustratedMessage
+			visible="{= !${app>/user/isManager} }"
+			illustrationType="sapIllus-UnableToLoad"
+			title="{i18n>adminTitle}"
+			description="{i18n>adminRestricted}" />
+
+		<f:GridContainer
+			visible="{app>/user/isManager}"
+			items="{app>/adminSections}"
+			snapToRow="true">
+			<f:layout>
+				<f:GridContainerSettings rowSize="5.5rem" columnSize="17rem" gap="1rem" />
+			</f:layout>
+			<GenericTile
+				class="hrxAppTile"
+				header="{app>title}"
+				subheader="{app>subtitle}"
+				mode="HeaderMode"
+				frameType="TwoByHalf"
+				press="onTilePress" />
+		</f:GridContainer>
+	</Page>
+</mvc:View>

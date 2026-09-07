@@ -1,0 +1,157 @@
+<mvc:View
+	controllerName="bsx.hrx.hrx2026.controller.MissingTimesheets"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:f="sap.f"
+	xmlns:core="sap.ui.core"
+	xmlns:layout="sap.ui.layout"
+	displayBlock="true"
+	class="hrxMissingTimesheets">
+
+	<Page id="missingTimesheetsPage" showHeader="false" title="{i18n>mtTitle}" showNavButton="false" class="hrxPageContent">
+
+		<subHeader>
+			<OverflowToolbar id="missingTimesheetsToolbar">
+				<Button
+					id="missingPrevMonth"
+					icon="sap-icon://navigation-left-arrow"
+					type="Transparent"
+					tooltip="{i18n>mtPreviousMonth}"
+					press=".onStepMonth">
+					<customData>
+						<core:CustomData key="step" value="previous" />
+					</customData>
+				</Button>
+				<DatePicker
+					id="missingMonth"
+					dateValue="{mtView>/month}"
+					displayFormat="MMMM y"
+					valueFormat="yyyy-MM-dd"
+					change=".onMonthChange"
+					width="11rem" />
+				<Button
+					id="missingNextMonth"
+					icon="sap-icon://navigation-right-arrow"
+					type="Transparent"
+					tooltip="{i18n>mtNextMonth}"
+					press=".onStepMonth">
+					<customData>
+						<core:CustomData key="step" value="next" />
+					</customData>
+				</Button>
+
+				<ToolbarSeparator />
+
+				<Label text="{i18n>mtShow}" labelFor="missingUserType" class="sapUiTinyMarginEnd" />
+				<Select
+					id="missingUserType"
+					selectedKey="{mtView>/userType}"
+					change=".onUserTypeChange"
+					width="10rem">
+					<core:Item key="S" text="{i18n>mtStaff}" />
+					<core:Item key="C" text="{i18n>mtContractors}" />
+					<core:Item key="ALL" text="{i18n>mtAllResources}" />
+				</Select>
+
+				<ToolbarSpacer />
+				<Button
+					id="missingRefresh"
+					icon="sap-icon://refresh"
+					type="Transparent"
+					tooltip="{i18n>mtRefreshTooltip}"
+					press=".onRefresh" />
+			</OverflowToolbar>
+		</subHeader>
+
+		<content>
+			<layout:Grid
+				defaultSpan="XL4 L4 M4 S12"
+				hSpacing="1"
+				vSpacing="1"
+				class="hrxCardRow sapUiSmallMarginBottom">
+
+				<VBox class="hrxKpi hrxKpiCritical">
+					<core:Icon src="sap-icon://alert" class="hrxKpiGlyph" />
+					<Text text="{i18n>mtKpiMissingHours}" class="hrxKpiLabel" />
+					<HBox alignItems="End">
+						<Text text="{mtView>/kpis/missingHours}" class="hrxKpiNum" />
+						<Text text="{i18n>mtHours}" class="hrxKpiUnit" />
+					</HBox>
+					<Text text="{mtView>/periodLabel}" class="hrxKpiSub" />
+				</VBox>
+
+				<VBox class="hrxKpi hrxKpiWarning">
+					<core:Icon src="sap-icon://group" class="hrxKpiGlyph" />
+					<Text text="{i18n>mtKpiDefaulters}" class="hrxKpiLabel" />
+					<Text text="{mtView>/kpis/defaulters}" class="hrxKpiNum" />
+					<Text text="{i18n>mtKpiDefaultersSub}" class="hrxKpiSub" />
+				</VBox>
+
+				<VBox class="hrxKpi hrxKpiNeutral">
+					<core:Icon src="sap-icon://employee" class="hrxKpiGlyph" />
+					<Text text="{i18n>mtKpiResources}" class="hrxKpiLabel" />
+					<Text text="{mtView>/kpis/resources}" class="hrxKpiNum" />
+					<Text text="{i18n>mtKpiResourcesSub}" class="hrxKpiSub" />
+				</VBox>
+			</layout:Grid>
+
+			<Table
+				id="missingTimesheetTable"
+				items="{mt>/rows}"
+				busy="{mtView>/busy}"
+				busyIndicatorDelay="0"
+				noDataText="{i18n>mtNoData}"
+				alternateRowColors="true"
+				growing="true"
+				growingThreshold="40"
+				growingScrollToLoad="true"
+				sticky="ColumnHeaders,HeaderToolbar">
+				<headerToolbar>
+					<Toolbar>
+						<Title text="{mtView>/title}" level="H3" />
+						<ToolbarSpacer />
+						<Text text="{mtView>/periodLabel}" class="hrxResourceMeta" />
+					</Toolbar>
+				</headerToolbar>
+				<columns>
+					<Column width="18rem"><Text text="{i18n>mtColResource}" /></Column>
+					<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mtColCompletion}" /></Column>
+					<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mtColBooked}" /></Column>
+					<Column hAlign="End"><Text text="{i18n>mtColMissing}" /></Column>
+				</columns>
+				<items>
+					<ColumnListItem>
+						<cells>
+							<HBox alignItems="Center">
+								<f:Avatar
+									displaySize="S"
+									backgroundColor="Accent6"
+									src="{path: 'mt>Pic', formatter: '.formatter.imageSrc'}"
+									initials="{parts: ['mt>FName', 'mt>LName'], formatter: '.formatter.initials'}"
+									class="sapUiTinyMarginEnd" />
+								<VBox>
+									<Text text="{mt>FullName}" class="hrxResourceName" />
+									<Text text="{mt>Email}" class="hrxResourceMeta" />
+								</VBox>
+							</HBox>
+
+							<ProgressIndicator
+								percentValue="{mt>Completion}"
+								displayValue="{mt>CompletionText}"
+								showValue="true"
+								state="{mt>CompletionState}" />
+
+							<ObjectIdentifier
+								title="{mt>BookedHours}"
+								text="{i18n>mtOf} {mt>ExpectedHours}" />
+
+							<ObjectNumber
+								number="{mt>MissingHours}"
+								state="{mt>CompletionState}" />
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table>
+		</content>
+	</Page>
+</mvc:View>

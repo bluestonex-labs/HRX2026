@@ -1,0 +1,62 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="clientUserDialog"
+		title="{= ${mcForm>/mode} === 'edit' ? ${i18n>mcEditUserTitle} : ${i18n>mcAddUserTitle} }"
+		contentWidth="32rem"
+		busy="{mcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="clientUserForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mcFieldFirstName}" required="true" />
+					<Input id="userFirstName" value="{mcForm>/FName}" placeholder="{i18n>mcFieldFirstNamePlaceholder}" />
+
+					<Label text="{i18n>mcFieldLastName}" required="true" />
+					<Input id="userLastName" value="{mcForm>/LName}" placeholder="{i18n>mcFieldLastNamePlaceholder}" />
+
+					<Label text="{i18n>mcFieldEmail}" required="true" />
+					<Input id="userEmail" value="{mcForm>/Email}" type="Email" placeholder="{i18n>mcFieldEmailPlaceholder}" />
+
+					<Label text="{i18n>mcFieldMobile}" />
+					<Input id="userMobile" value="{mcForm>/Mobile}" type="Tel" placeholder="{i18n>mcFieldMobilePlaceholder}" />
+
+					<Label text="{i18n>mcFieldActive}" />
+					<Switch id="userActive" state="{mcForm>/IsActive}" type="AcceptReject" />
+
+					<Label text="{i18n>mcFieldAdmin}" visible="{= ${mcForm>/mode} === 'edit' }" />
+					<Switch
+						id="userAdmin"
+						state="{mcForm>/IsAdmin}"
+						type="AcceptReject"
+						visible="{= ${mcForm>/mode} === 'edit' }" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="userConfirm" text="{i18n>mcSave}" type="Emphasized" press=".onSaveUser" />
+		</beginButton>
+		<endButton>
+			<Button id="userCancel" text="{i18n>mcCancel}" press=".onCancelUser" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

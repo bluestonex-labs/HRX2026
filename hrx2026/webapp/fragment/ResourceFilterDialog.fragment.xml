@@ -1,0 +1,66 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="resourceFilterDialog"
+		title="{i18n>mrFilterTitle}"
+		contentWidth="30rem">
+		<content>
+			<form:SimpleForm
+				id="resourceFilterForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mrFilterUserType}" />
+					<Select id="filterUserType" selectedKey="{mrView>/filterDraft/userType}" width="100%">
+						<core:Item key="S" text="{i18n>mrUserTypeStaff}" />
+						<core:Item key="C" text="{i18n>mrUserTypeContractor}" />
+						<core:Item key="A" text="{i18n>mrFilterAll}" />
+					</Select>
+
+					<Label text="{i18n>mrFilterStatus}" />
+					<Select id="filterActive" selectedKey="{mrView>/filterDraft/active}" width="100%">
+						<core:Item key="Y" text="{i18n>mrStatusActive}" />
+						<core:Item key="N" text="{i18n>mrStatusInactive}" />
+						<core:Item key="A" text="{i18n>mrFilterAll}" />
+					</Select>
+
+					<Label text="{i18n>mrFilterLocation}" />
+					<ComboBox
+						id="filterSite"
+						selectedKey="{mrView>/filterDraft/site}"
+						items="{mr>/sites}"
+						width="100%"
+						showSecondaryValues="true"
+						placeholder="{i18n>mrFilterAllLocations}">
+						<core:ListItem key="{mr>SiteID}" text="{mr>SiteLabel}" additionalText="{mr>SiteLocation}" />
+					</ComboBox>
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<buttons>
+			<Button
+				id="filterConfirm"
+				text="{i18n>mrFilterConfirm}"
+				type="Emphasized"
+				press=".onConfirmFilter" />
+			<Button id="filterReset" text="{i18n>mrFilterReset}" press=".onClearFilter" />
+			<Button id="filterCancel" text="{i18n>mrCancel}" press=".onCancelFilter" />
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,307 @@
+<mvc:View
+	controllerName="bsx.hrx.hrx2026.controller.Home"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:f="sap.f"
+	xmlns:card="sap.f.cards"
+	xmlns:core="sap.ui.core"
+	xmlns:layout="sap.ui.layout"
+	xmlns:micro="sap.suite.ui.microchart"
+	displayBlock="true">
+	<Page id="homePage" showHeader="false" showNavButton="false" class="hrxPageContent hrxHomePage">
+
+		<!-- Action row. A responsive grid keeps the three cards in their own columns
+		     whatever their height, so they cannot overlap. -->
+		<!-- A flex row rather than a grid: when the approvals card is hidden for
+		     somebody who manages nobody, the remaining cards close the gap instead of
+		     leaving an empty column behind. -->
+		<HBox wrap="Wrap" alignItems="Stretch" class="hrxActionRow sapUiSmallMarginBottom">
+
+			<!-- Approvals: only a manager has anything to decide -->
+			<f:Card id="approvalsCard" visible="{app>/user/isManager}" class="hrxHomeCard">
+				<f:header>
+					<card:Header
+						title="{i18n>approvalsTitle}"
+						subtitle="{path: 'home>/approvals', formatter: '.formatPendingCount'}" />
+				</f:header>
+				<f:content>
+					<VBox width="100%" busy="{home>/loadingApprovals}" busyIndicatorDelay="0">
+						<List
+							items="{home>/approvals}"
+							showSeparators="Inner"
+							noDataText="{i18n>homeNoApprovals}">
+							<CustomListItem>
+								<HBox
+									alignItems="Center"
+									justifyContent="SpaceBetween"
+									class="hrxResourceRow">
+									<HBox alignItems="Center">
+										<Avatar
+											initials="{home>initials}"
+											displaySize="S"
+											class="sapUiTinyMarginEnd" />
+										<VBox>
+											<Text text="{home>title}" class="hrxResourceName" />
+											<Text text="{home>meta}" class="hrxResourceMeta" />
+										</VBox>
+									</HBox>
+									<HBox>
+										<Button
+											icon="sap-icon://accept"
+											type="Accept"
+											tooltip="{i18n>btnApprove}"
+											press=".onApproveLeave"
+											class="sapUiTinyMarginEnd" />
+										<Button
+											icon="sap-icon://decline"
+											type="Reject"
+											tooltip="{i18n>btnReject}"
+											press=".onRejectLeave" />
+									</HBox>
+								</HBox>
+							</CustomListItem>
+						</List>
+					</VBox>
+				</f:content>
+			</f:Card>
+
+			<!-- Quick Leave -->
+			<f:Card id="quickLeaveCard" class="hrxHomeCard">
+				<f:header>
+					<card:Header title="{i18n>quickLeaveTitle}" />
+				</f:header>
+				<f:content>
+					<VBox class="hrxCardBody" width="100%" busy="{home>/savingLeave}" busyIndicatorDelay="0">
+						<Label text="{i18n>fieldDates}" required="true" />
+						<DateRangeSelection
+							id="qlDateRange"
+							width="100%"
+							valueFormat="yyyy-MM-dd"
+							change=".onQuickLeaveDatesChange"
+							placeholder="{i18n>mlDatesPlaceholder}"
+							class="sapUiTinyMarginBottom" />
+
+						<Label text="{i18n>fieldLeaveType}" />
+						<Select
+							id="qlType"
+							width="100%"
+							selectedKey="{home>/quickLeave/LeaveCategoryId}"
+							items="{home>/leaveTypes}"
+							class="sapUiTinyMarginBottom">
+							<core:Item key="{home>LeaveCategoryId}" text="{home>LeaveCategoryDesc}" />
+						</Select>
+
+						<Label text="{i18n>fieldDuration}" />
+						<Select
+							id="qlDuration"
+							width="100%"
+							selectedKey="{home>/quickLeave/DayTime}"
+							change=".onQuickLeaveDurationChange"
+							class="sapUiTinyMarginBottom">
+							<core:Item key="Full Day" text="{i18n>durationFullDay}" />
+							<core:Item key="AM" text="{i18n>durationHalfAM}" />
+							<core:Item key="PM" text="{i18n>durationHalfPM}" />
+						</Select>
+
+						<Label text="{i18n>fieldComments}" />
+						<TextArea
+							id="qlComments"
+							value="{home>/quickLeave/Comments}"
+							rows="2"
+							width="100%"
+							class="sapUiTinyMarginBottom"
+							placeholder="{i18n>mlOptional}" />
+
+						<Label text="{i18n>fieldApprover}" />
+						<Text
+							text="{home>/user/managerName}"
+							class="hrxResourceName sapUiTinyMarginBottom" />
+
+						<HBox alignItems="Center" class="sapUiTinyMarginBottom">
+							<ObjectNumber
+								number="{home>/quickLeave/NoOfDays}"
+								unit="{i18n>mlDays}"
+								state="{= ${home>/quickLeave/NoOfDays} > 0 ? 'Success' : 'None' }" />
+						</HBox>
+
+						<Button
+							id="qlSubmit"
+							text="{i18n>btnRequestLeave}"
+							type="Emphasized"
+							width="100%"
+							enabled="{= ${home>/quickLeave/NoOfDays} > 0 }"
+							press=".onRequestLeave" />
+					</VBox>
+				</f:content>
+			</f:Card>
+
+			<!-- Quick Timesheet -->
+			<f:Card id="quickTimesheetCard" class="hrxHomeCard">
+				<f:header>
+					<card:Header
+						title="{i18n>quickTimesheetTitle}"
+						subtitle="{home>/quick/dayLabel}" />
+				</f:header>
+				<f:content>
+					<VBox class="hrxCardBody" width="100%" busy="{home>/loadingDay}" busyIndicatorDelay="0">
+
+						<Label text="{i18n>fieldDay}" required="true" />
+						<DatePicker
+							id="qtDay"
+							width="100%"
+							value="{home>/quick/day}"
+							valueFormat="yyyy-MM-dd"
+							displayFormat="EEE, d MMM yyyy"
+							change=".onQuickDayChange"
+							class="sapUiTinyMarginBottom" />
+
+						<!-- Nothing booked yet for the chosen day: the entry form -->
+						<VBox visible="{= !${home>/quick/logged} }">
+							<MessageStrip
+								text="{home>/quick/dayEditableReason}"
+								type="Information"
+								showIcon="true"
+								class="sapUiTinyMarginBottom"
+								visible="{= !${home>/quick/dayEditable} }" />
+
+							<Label text="{i18n>fieldProject}" required="true" />
+							<ComboBox
+								id="qtProject"
+								width="100%"
+								enabled="{home>/quick/dayEditable}"
+								selectedKey="{home>/quick/ProjectID}"
+								items="{home>/projectTypes}"
+								placeholder="{i18n>qtProjectPlaceholder}"
+								class="sapUiTinyMarginBottom">
+								<core:Item key="{home>ProjectKey}" text="{home>label}" />
+							</ComboBox>
+
+							<Label text="{i18n>fieldTimeSpent}" required="true" />
+							<Input
+								id="qtHours"
+								width="100%"
+								enabled="{home>/quick/dayEditable}"
+								value="{home>/quick/hours}"
+								change=".onQuickHoursChange"
+								placeholder="{i18n>qtHoursPlaceholder}"
+								class="sapUiTinyMarginBottom" />
+
+							<Label text="{i18n>fieldComment}" required="true" />
+							<TextArea
+								id="qtComment"
+								value="{home>/quick/comment}"
+								enabled="{home>/quick/dayEditable}"
+								rows="2"
+								width="100%"
+								class="sapUiTinyMarginBottom"
+								placeholder="{i18n>qtCommentPlaceholder}" />
+
+							<Button
+								id="qtSave"
+								text="{i18n>btnSave}"
+								type="Emphasized"
+								width="100%"
+								enabled="{home>/quick/dayEditable}"
+								press=".onSaveQuickTimesheet" />
+						</VBox>
+
+						<!-- Already booked: what the day holds, straight from the service -->
+						<VBox visible="{home>/quick/logged}">
+							<VBox alignItems="Center" class="sapUiSmallMarginTop">
+								<core:Icon src="sap-icon://message-success" class="hrxLoggedIcon" />
+								<Text
+									text="{parts: ['home>/quick/bookedTotal'], formatter: '.formatLoggedTitle'}"
+									class="hrxSectionTitle sapUiTinyMarginTop" />
+								<Text text="{home>/quick/dayFullLabel}" class="hrxResourceMeta" />
+							</VBox>
+							<List
+								items="{home>/quick/entries}"
+								showSeparators="Inner"
+								class="sapUiSmallMarginTop">
+								<CustomListItem>
+									<VBox class="hrxResourceRow" width="100%">
+										<HBox justifyContent="SpaceBetween" alignItems="Center" width="100%">
+											<Text text="{home>project}" class="hrxResourceName sapUiTinyMarginEnd" />
+											<Text text="{home>time}" class="hrxDayTotal" />
+										</HBox>
+										<Text text="{home>comment}" class="hrxResourceMeta" />
+									</VBox>
+								</CustomListItem>
+							</List>
+							<Button
+								id="qtLogMore"
+								text="{i18n>btnLogMoreTime}"
+								type="Transparent"
+								width="100%"
+								press=".onLogMoreTime"
+								class="sapUiTinyMarginTop" />
+						</VBox>
+					</VBox>
+				</f:content>
+			</f:Card>
+		</HBox>
+
+		<!-- This week's timesheet -->
+		<f:Card id="weekSummaryCard">
+			<f:header>
+				<card:Header
+					title="{i18n>timesheetCardTitle}"
+					subtitle="{home>/week/label}" />
+			</f:header>
+			<f:content>
+				<VBox class="hrxCardBody" width="100%" busy="{home>/loadingWeek}" busyIndicatorDelay="0">
+					<!-- One column per day, all the same width, and the ring and the leave
+					     marker share a slot of one height so every label lines up. -->
+					<HBox class="hrxRingRow" justifyContent="SpaceBetween" items="{home>/weekRings}">
+						<VBox alignItems="Center" class="hrxRingDay">
+							<Text text="{home>day}" class="hrxRingDayName" />
+							<VBox alignItems="Center" justifyContent="Center" class="hrxRingSlot">
+								<VBox
+									alignItems="Center"
+									justifyContent="Center"
+									class="hrxLeaveRing"
+									visible="{home>onLeave}">
+									<core:Icon src="sap-icon://accept" />
+								</VBox>
+								<!-- Responsive so the ring takes the size of its slot: the fixed
+								     sizes render far wider than the day column and lapped over
+								     the days either side. -->
+								<micro:RadialMicroChart
+									size="Responsive"
+									width="64px"
+									height="64px"
+									visible="{= !${home>onLeave} }"
+									percentage="{home>percent}"
+									valueColor="{home>state}" />
+							</VBox>
+							<Text text="{home>label}" class="hrxRingLabel" />
+						</VBox>
+					</HBox>
+
+					<HBox wrap="Wrap" class="hrxLegend sapUiSmallMarginTop">
+						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
+							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotSignal" />
+							<Text text="{i18n>legendMissing}" />
+						</HBox>
+						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
+							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotAmber" />
+							<Text text="{i18n>legendActionNeeded}" />
+						</HBox>
+						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
+							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotMint" />
+							<Text text="{i18n>legendComplete}" />
+						</HBox>
+						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
+							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotIce" />
+							<Text text="{i18n>legendOnLeave}" />
+						</HBox>
+						<HBox alignItems="Center">
+							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotLine" />
+							<Text text="{i18n>legendNotDue}" />
+						</HBox>
+					</HBox>
+				</VBox>
+			</f:content>
+		</f:Card>
+	</Page>
+</mvc:View>

@@ -1,0 +1,32 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+
+	<Dialog
+		id="leaveHalfDayDialog"
+		title="{i18n>mlHalfDaysTitle}"
+		contentWidth="26rem">
+		<content>
+			<List
+				id="leaveHalfDayList"
+				items="{ml>/dates}"
+				noDataText="{i18n>mlNoBookableDays}">
+				<InputListItem label="{ml>displayDate}">
+					<SegmentedButton selectedKey="{ml>SelectedKey}" width="100%">
+						<items>
+							<SegmentedButtonItem text="{i18n>mlFullDay}" key="F" enabled="{ml>FullDayEnabled}" />
+							<SegmentedButtonItem text="{i18n>mlAm}" key="A" enabled="{ml>AMEnabled}" />
+							<SegmentedButtonItem text="{i18n>mlPm}" key="P" enabled="{ml>PMEnabled}" />
+						</items>
+					</SegmentedButton>
+				</InputListItem>
+			</List>
+		</content>
+		<beginButton>
+			<Button id="leaveHalfDayConfirm" text="{i18n>mlConfirm}" type="Emphasized" press=".onConfirmHalfDays" />
+		</beginButton>
+		<endButton>
+			<Button id="leaveHalfDayReset" text="{i18n>mlReset}" press=".onResetHalfDays" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

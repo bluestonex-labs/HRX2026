@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx">
+    <edmx:DataServices m:DataServiceVersion="2.0" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
+        <Schema Namespace="default" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <EntityType Name="orgsType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="OrgDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="OrgLocation" Type="Edm.String" MaxLength="100"/>
+                <Property Name="OrgLogo" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="OrgLogoB" Type="Edm.Binary"/>
+                <Property Name="OrgContactName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="OrgContactMobile" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgContactEmail" Type="Edm.String" MaxLength="100"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+            </EntityType>
+            <EntityType Name="sitesType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="SiteID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="SiteID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="SiteDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="SiteLocation" Type="Edm.String" MaxLength="100"/>
+                <Property Name="SiteLogo" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="SiteLogoB" Type="Edm.Binary"/>
+                <Property Name="SiteContactName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="SiteContactMobile" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SiteContactEmail" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Capacity" Type="Edm.String" MaxLength="10"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+            </EntityType>
+            <EntityType Name="statusType">
+                <Key>
+                    <PropertyRef Name="StatusKey"/>
+                </Key>
+                <Property Name="StatusKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="StatusName" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="user_typeType">
+                <Key>
+                    <PropertyRef Name="UsrTypeKey"/>
+                </Key>
+                <Property Name="UsrTypeKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="UsrTypeName" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="usersType">
+                <Key>
+                    <PropertyRef Name="ID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Int64" Nullable="false"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="FName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Email" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Mobile" Type="Edm.String" MaxLength="15"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BaseSiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Pic" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="PicB" Type="Edm.Binary"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="HostID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="HostName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="VehRegNo" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Organization" Type="Edm.String" MaxLength="50"/>
+                <Property Name="IsPreReg" Type="Edm.String" MaxLength="1"/>
+                <Property Name="AccessCard" Type="Edm.String" MaxLength="20"/>
+                <Property Name="VisitingOn" Type="Edm.DateTime"/>
+                <Property Name="VisitingAt" Type="Edm.Time"/>
+                <Property Name="IsDeleted" Type="Edm.String" MaxLength="1"/>
+            </EntityType>
+            <EntityType Name="visit_logType">
+                <Key>
+                    <PropertyRef Name="UserID"/>
+                    <PropertyRef Name="LogDateTime"/>
+                </Key>
+                <Property Name="UserID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StatusKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LogDateTime" Type="Edm.DateTime" Nullable="false"/>
+                <Property Name="Location" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="usersminType">
+                <Key>
+                    <PropertyRef Name="ID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Int64" Nullable="false"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="FName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Email" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Mobile" Type="Edm.String" MaxLength="15"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BaseSiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="HostID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="HostName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="VehRegNo" Type="Edm.String" MaxLength="50"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Organization" Type="Edm.String" MaxLength="50"/>
+                <Property Name="IsPreReg" Type="Edm.String" MaxLength="1"/>
+                <Property Name="AccessCard" Type="Edm.String" MaxLength="20"/>
+                <Property Name="VisitingOn" Type="Edm.DateTime"/>
+                <Property Name="VisitingAt" Type="Edm.Time"/>
+                <NavigationProperty Name="RoleRef" Relationship="default.ToRoleAssctnType" FromRole="usersminPrincipal" ToRole="user_role_textDependent"/>
+            </EntityType>
+            <EntityType Name="user_roleType">
+                <Key>
+                    <PropertyRef Name="RecID"/>
+                </Key>
+                <Property Name="RecID" Type="Edm.Int64" Nullable="false"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SiteID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserRole" Type="Edm.Int64"/>
+            </EntityType>
+            <EntityType Name="roleType">
+                <Key>
+                    <PropertyRef Name="RoleID"/>
+                </Key>
+                <Property Name="RoleID" Type="Edm.Int64" Nullable="false"/>
+                <Property Name="RoleDesc" Type="Edm.String" MaxLength="150"/>
+            </EntityType>
+            <EntityType Name="user_role_textType">
+                <Key>
+                    <PropertyRef Name="RecID"/>
+                </Key>
+                <Property Name="RoleID" Type="Edm.Int64"/>
+                <Property Name="RoleDesc" Type="Edm.String" MaxLength="150"/>
+                <Property Name="RecID" Type="Edm.Int64"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SiteID" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="LeaveTypesType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="LeaveCategoryId"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="LeaveCategoryId" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="LeaveCategoryDesc" Type="Edm.String" MaxLength="25"/>
+            </EntityType>
+            <EntityType Name="ProjectsDataType">
+                <Key>
+                    <PropertyRef Name="ProjectKey"/>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="OrgID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ClientKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StartDate" Type="Edm.DateTime"/>
+                <Property Name="EndDate" Type="Edm.DateTime"/>
+                <Property Name="PriorityKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PONumber" Type="Edm.String" MaxLength="50"/>
+                <Property Name="POValue" Type="Edm.String" MaxLength="50"/>
+                <Property Name="CreatedOn" Type="Edm.DateTime"/>
+                <Property Name="CreatedBy" Type="Edm.String" MaxLength="50"/>
+                <Property Name="IsTimeBookingAllowed" Type="Edm.String" MaxLength="1"/>
+                <Property Name="ProjectManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="TotBillableDays" Type="Edm.String" MaxLength="15"/>
+                <Property Name="OrgID_1" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientKey_1" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ClientLocation" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientLogo" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="ClientContactName" Type="Edm.String" MaxLength="20"/>
+                <Property Name="ClientContactMobile" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientContactEmail" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID_2" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientKey_2" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientDesc_1" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ClientLocation_1" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientLogo_1" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="ClientContactName_1" Type="Edm.String" MaxLength="20"/>
+                <Property Name="ClientContactMobile_1" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientContactEmail_1" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="ClientsType">
+                <Key>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="OrgID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ClientKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ClientDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ClientLocation" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientLogo" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="ClientContactName" Type="Edm.String" MaxLength="20"/>
+                <Property Name="ClientContactMobile" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientContactEmail" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="PrioritiesType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="PriorityKey"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="PriorityKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="PriorityDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="ProjectTypesType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="ProjectTypeKey"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ProjectTypeKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ProjectTypeDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="PredefinedBillingType">
+                <Key>
+                    <PropertyRef Name="BillingID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BillingID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="BillingDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SkillID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="DayRate" Type="Edm.String" MaxLength="25"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="15"/>
+            </EntityType>
+            <EntityType Name="AssignmentsType">
+                <Key>
+                    <PropertyRef Name="ASSIGNMENTID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BillingID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="DayRate" Type="Edm.String" MaxLength="25"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="15"/>
+                <Property Name="BillableDays" Type="Edm.String" MaxLength="10"/>
+                <Property Name="TotalCharge" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StartDate" Type="Edm.DateTime"/>
+                <Property Name="EndDate" Type="Edm.DateTime"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="ASSIGNMENTID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="AttachmentsType">
+                <Key>
+                    <PropertyRef Name="AttachmentID"/>
+                    <PropertyRef Name="ProjectKey"/>
+                </Key>
+                <Property Name="AttachmentID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="FileName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="FileType" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Attachment" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="UploadedBy" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UploadedOn" Type="Edm.DateTime"/>
+            </EntityType>
+            <EntityType Name="ProjectsAssignmentDataType">
+                <Key>
+                    <PropertyRef Name="ProjectKey"/>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="EmpID"/>
+                </Key>
+                <Property Name="ASSIGNMENTID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="CreatedBy" Type="Edm.String" MaxLength="50"/>
+                <Property Name="CreatedOn" Type="Edm.DateTime"/>
+                <Property Name="EndDate" Type="Edm.DateTime"/>
+                <Property Name="IsTimeBookingAllowed" Type="Edm.String" MaxLength="1"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PONumber" Type="Edm.String" MaxLength="50"/>
+                <Property Name="POValue" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PriorityKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ProjectKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StartDate" Type="Edm.DateTime"/>
+                <Property Name="TotBillableDays" Type="Edm.String" MaxLength="15"/>
+                <Property Name="BillableDays" Type="Edm.String" MaxLength="10"/>
+                <Property Name="BillingID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="15"/>
+                <Property Name="DayRate" Type="Edm.String" MaxLength="25"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="EndDate_1" Type="Edm.DateTime"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="StartDate_1" Type="Edm.DateTime"/>
+                <Property Name="TotalCharge" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Email" Type="Edm.String" MaxLength="100"/>
+                <Property Name="FName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Mobile" Type="Edm.String" MaxLength="15"/>
+                <Property Name="Pic" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID_1" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ID" Type="Edm.Int64"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID_2" Type="Edm.String" MaxLength="10"/>
+                <Property Name="EmpID_1" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BaseSiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PicB" Type="Edm.Binary"/>
+                <Property Name="IsActive_1" Type="Edm.String" MaxLength="1"/>
+            </EntityType>
+            <EntityType Name="UsersAssignmentDataType">
+                <Key>
+                    <PropertyRef Name="EmpID"/>
+                    <PropertyRef Name="OrgID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Int64"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="10"/>
+                <Property Name="FName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Email" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Mobile" Type="Edm.String" MaxLength="15"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BaseSiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Pic" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="PicB" Type="Edm.Binary"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="TargetUtilization" Type="Edm.String" MaxLength="15"/>
+                <Property Name="ProjectID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BillingID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="DayRate" Type="Edm.String" MaxLength="25"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="15"/>
+                <Property Name="BillableDays" Type="Edm.String" MaxLength="10"/>
+                <Property Name="TotalCharge" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StartDate" Type="Edm.DateTime"/>
+                <Property Name="EndDate" Type="Edm.DateTime"/>
+                <Property Name="IsActive_1" Type="Edm.String" MaxLength="1"/>
+                <Property Name="ASSIGNMENTID" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="Client_AppsType">
+                <Key>
+                    <PropertyRef Name="SoftwareRecID"/>
+                </Key>
+                <Property Name="SoftwareRecID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Software" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Component" Type="Edm.String" MaxLength="100"/>
+                <Property Name="SubComponent" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ValidFrom" Type="Edm.DateTime"/>
+                <Property Name="ValidTill" Type="Edm.DateTime"/>
+                <Property Name="IsSupported" Type="Edm.String" MaxLength="1"/>
+                <Property Name="SystemNo" Type="Edm.String" MaxLength="10"/>
+                <Property Name="InstallDate" Type="Edm.DateTime"/>
+                <Property Name="SAPVersion" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ObjectCost" Type="Edm.String" MaxLength="10"/>
+                <Property Name="SupportCost" Type="Edm.String" MaxLength="10"/>
+                <Property Name="IsCloudCustomer" Type="Edm.String" MaxLength="1"/>
+                <Property Name="MsgIndicator" Type="Edm.String" MaxLength="1"/>
+                <Property Name="WarningMessage" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="NoOfAttachments" Type="Edm.String" MaxLength="10"/>
+                <Property Name="HardMessage" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ShowWarning" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Metrics" Type="Edm.String" MaxLength="5"/>
+                <Property Name="Threshold" Type="Edm.String" MaxLength="15"/>
+                <Property Name="Count" Type="Edm.String" MaxLength="15"/>
+            </EntityType>
+            <EntityType Name="SoftwaresType">
+                <Key>
+                    <PropertyRef Name="AppID"/>
+                </Key>
+                <Property Name="AppID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="AppName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="AppType" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="ComponentsType">
+                <Key>
+                    <PropertyRef Name="AppID"/>
+                    <PropertyRef Name="ComponentID"/>
+                </Key>
+                <Property Name="AppID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ComponentID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ComponentName" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="SubComponentsType">
+                <Key>
+                    <PropertyRef Name="AppID"/>
+                    <PropertyRef Name="ComponentID"/>
+                    <PropertyRef Name="SubComponentID"/>
+                </Key>
+                <Property Name="AppID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ComponentID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="SubComponentID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="SubComponentName" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="LicensedAppsDataType">
+                <Key>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="Software"/>
+                    <PropertyRef Name="Component"/>
+                    <PropertyRef Name="SubComponent"/>
+                </Key>
+                <Property Name="SoftwareRecID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ClientKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Software" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Component" Type="Edm.String" MaxLength="100"/>
+                <Property Name="SubComponent" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ValidFrom" Type="Edm.DateTime"/>
+                <Property Name="ValidTill" Type="Edm.DateTime"/>
+                <Property Name="IsSupported" Type="Edm.String" MaxLength="1"/>
+                <Property Name="SystemNo" Type="Edm.String" MaxLength="10"/>
+                <Property Name="InstallDate" Type="Edm.DateTime"/>
+                <Property Name="SAPVersion" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ObjectCost" Type="Edm.String" MaxLength="10"/>
+                <Property Name="SupportCost" Type="Edm.String" MaxLength="10"/>
+                <Property Name="IsCloudCustomer" Type="Edm.String" MaxLength="1"/>
+                <Property Name="MsgIndicator" Type="Edm.String" MaxLength="1"/>
+                <Property Name="WarningMessage" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="NoOfAttachments" Type="Edm.String" MaxLength="10"/>
+                <Property Name="HardMessage" Type="Edm.String" MaxLength="5000"/>
+                <Property Name="ShowWarning" Type="Edm.String" MaxLength="1"/>
+                <Property Name="AppName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="AppType" Type="Edm.String" MaxLength="50"/>
+                <Property Name="formatInstallDate" Type="Edm.String" MaxLength="10"/>
+                <Property Name="formatValidTill" Type="Edm.String" MaxLength="10"/>
+                <Property Name="formatValidFrom" Type="Edm.String" MaxLength="10"/>
+                <Property Name="ComponentName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="SubComponentName" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ShowError" Type="Edm.String" MaxLength="1"/>
+            </EntityType>
+            <EntityType Name="BTPServicesType">
+                <Key>
+                    <PropertyRef Name="ServiceID"/>
+                </Key>
+                <Property Name="ServiceID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ServiceDesc" Type="Edm.String" MaxLength="150"/>
+                <Property Name="ServiceCost" Type="Edm.String" MaxLength="20"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="5"/>
+            </EntityType>
+            <EntityType Name="AppMasterType">
+                <Key>
+                    <PropertyRef Name="AppID"/>
+                </Key>
+                <Property Name="AppID" Type="Edm.String" Nullable="false" MaxLength="75"/>
+                <Property Name="AppType" Type="Edm.String" MaxLength="20"/>
+                <Property Name="AppDesc" Type="Edm.String" MaxLength="150"/>
+            </EntityType>
+            <EntityType Name="ClientAppServicesType">
+                <Key>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="AppID"/>
+                    <PropertyRef Name="ServiceID"/>
+                </Key>
+                <Property Name="ClientKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="AppID" Type="Edm.String" Nullable="false" MaxLength="75"/>
+                <Property Name="ServiceID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ValidFrom" Type="Edm.DateTime"/>
+                <Property Name="ValidTill" Type="Edm.DateTime"/>
+                <Property Name="DeployedVersion" Type="Edm.String" MaxLength="10"/>
+            </EntityType>
+            <EntityType Name="ClientAppServiceViewType">
+                <Key>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="AppID"/>
+                    <PropertyRef Name="ServiceID"/>
+                </Key>
+                <Property Name="ClientKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="AppID" Type="Edm.String" MaxLength="75"/>
+                <Property Name="ServiceID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ValidFrom" Type="Edm.DateTime"/>
+                <Property Name="ValidTill" Type="Edm.DateTime"/>
+                <Property Name="DeployedVersion" Type="Edm.String" MaxLength="10"/>
+                <Property Name="ServiceDesc" Type="Edm.String" MaxLength="150"/>
+            </EntityType>
+            <EntityType Name="TrackAppUsageType">
+                <Key>
+                    <PropertyRef Name="UserId"/>
+                    <PropertyRef Name="EDate"/>
+                    <PropertyRef Name="ETime"/>
+                </Key>
+                <Property Name="UserId" Type="Edm.String" Nullable="false" MaxLength="225"/>
+                <Property Name="EDate" Type="Edm.String" Nullable="false" MaxLength="8"/>
+                <Property Name="ETime" Type="Edm.String" Nullable="false" MaxLength="6"/>
+                <Property Name="DDate" Type="Edm.String" MaxLength="8"/>
+                <Property Name="DTime" Type="Edm.String" MaxLength="6"/>
+                <Property Name="Fullname" Type="Edm.String" MaxLength="80"/>
+                <Property Name="AppID" Type="Edm.String" MaxLength="255"/>
+                <Property Name="Appname" Type="Edm.String" MaxLength="255"/>
+                <Property Name="Device" Type="Edm.String" MaxLength="10"/>
+                <Property Name="Browser" Type="Edm.String" MaxLength="40"/>
+                <Property Name="OS" Type="Edm.String" MaxLength="20"/>
+            </EntityType>
+            <EntityType Name="BTPClientsType">
+                <Key>
+                    <PropertyRef Name="ClientKey"/>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="BTPInstanceID"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ClientKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="BTPInstanceID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="BTPDesc" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BTPLongDesc" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="ResourcesType">
+                <Key>
+                    <PropertyRef Name="EmpID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Int64"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="10"/>
+                <Property Name="FName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Email" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Mobile" Type="Edm.String" MaxLength="15"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BaseSiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Pic" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="PicB" Type="Edm.Binary"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="TargetUtilization" Type="Edm.String" MaxLength="15"/>
+                <Property Name="Mo" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Tu" Type="Edm.String" MaxLength="1"/>
+                <Property Name="We" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Th" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Fr" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Sa" Type="Edm.String" MaxLength="1"/>
+                <Property Name="Su" Type="Edm.String" MaxLength="1"/>
+                <Property Name="AnnualLeaveQuota" Type="Edm.String" MaxLength="5"/>
+                <Property Name="TargetHrsPerWeek" Type="Edm.String" MaxLength="10"/>
+                <Property Name="BonusPercent" Type="Edm.Int32"/>
+                <Property Name="PensionRate" Type="Edm.Int32"/>
+            </EntityType>
+            <EntityType Name="UserTypesType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="UserTypeKey"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="UserTypeDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="TaskType">
+                <Key>
+                    <PropertyRef Name="TaskKey"/>
+                </Key>
+                <Property Name="TaskKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="TaskDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="ProjectTaskType">
+                <Key>
+                    <PropertyRef Name="ProjectTaskKey"/>
+                </Key>
+                <Property Name="TaskKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectTaskKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="PRIORITYType">
+                <Key>
+                    <PropertyRef Name="PriorityID"/>
+                </Key>
+                <Property Name="PriorityID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="PriorityShortDesc" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PriorityDesc" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="CATEGORYType">
+                <Key>
+                    <PropertyRef Name="CategoryID"/>
+                </Key>
+                <Property Name="CategoryID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="CategoryDesc" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="SUBCATEGORYType">
+                <Key>
+                    <PropertyRef Name="SubCategoryID"/>
+                </Key>
+                <Property Name="CategoryID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SubCategoryID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="SubCategoryDesc" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="STATUSType">
+                <Key>
+                    <PropertyRef Name="StatusID"/>
+                </Key>
+                <Property Name="StatusID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="StatusDesc" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="UsersAssignmentDataTimesheetType">
+                <Key>
+                    <PropertyRef Name="ASSIGNMENTID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Int64"/>
+                <Property Name="UserID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="OrgID" Type="Edm.String" MaxLength="10"/>
+                <Property Name="FName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="LName" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Email" Type="Edm.String" MaxLength="100"/>
+                <Property Name="Mobile" Type="Edm.String" MaxLength="15"/>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="UserTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BaseSiteKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ManagerID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="Pic" Type="Edm.String" MaxLength="2147483647"/>
+                <Property Name="TargetUtilization" Type="Edm.String" MaxLength="15"/>
+                <Property Name="ProjectID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="BillingID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="DayRate" Type="Edm.String" MaxLength="25"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="15"/>
+                <Property Name="BillableDays" Type="Edm.String" MaxLength="10"/>
+                <Property Name="TotalCharge" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StartDate" Type="Edm.DateTime"/>
+                <Property Name="EndDate" Type="Edm.DateTime"/>
+                <Property Name="IsActive" Type="Edm.String" MaxLength="1"/>
+                <Property Name="ASSIGNMENTID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectDesc" Type="Edm.String" MaxLength="100"/>
+                <Property Name="ClientKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectTypeKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PONumber" Type="Edm.String" MaxLength="50"/>
+                <Property Name="IsTimeBookingAllowed" Type="Edm.String" MaxLength="1"/>
+            </EntityType>
+            <EntityType Name="PROJECTS_TEXTSType">
+                <Key>
+                    <PropertyRef Name="OrgID"/>
+                    <PropertyRef Name="ProjectKey"/>
+                </Key>
+                <Property Name="OrgID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="IsTimeBookingAllowed" Type="Edm.String" MaxLength="1"/>
+                <Property Name="ProjectDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="INC_CATEGORY_TEXTSType">
+                <Key>
+                    <PropertyRef Name="CategoryID"/>
+                </Key>
+                <Property Name="CategoryID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="CategoryDesc" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="INC_SUB_CATEGORY_TEXTSType">
+                <Key>
+                    <PropertyRef Name="SubCategoryID"/>
+                </Key>
+                <Property Name="CategoryID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="SubCategoryID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="SubCategoryDesc" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="INC_STATUS_TEXTSType">
+                <Key>
+                    <PropertyRef Name="StatusID"/>
+                </Key>
+                <Property Name="StatusID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="StatusDesc" Type="Edm.String" MaxLength="50"/>
+            </EntityType>
+            <EntityType Name="INC_PRIORITY_TEXTSType">
+                <Key>
+                    <PropertyRef Name="PriorityID"/>
+                </Key>
+                <Property Name="PriorityID" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="PriorityShortDesc" Type="Edm.String" MaxLength="50"/>
+                <Property Name="PriorityDesc" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="TASK_TEXTSType">
+                <Key>
+                    <PropertyRef Name="TaskKey"/>
+                </Key>
+                <Property Name="TaskKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="TaskDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="Proj_Task_Assign_TextType">
+                <Key>
+                    <PropertyRef Name="ProjectTaskKey"/>
+                </Key>
+                <Property Name="TaskKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectTaskKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="TaskDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <EntityType Name="Emp_Task_Assign_TextType">
+                <Key>
+                    <PropertyRef Name="EmpID"/>
+                    <PropertyRef Name="ProjectKey"/>
+                    <PropertyRef Name="ProjectTaskKey"/>
+                </Key>
+                <Property Name="EmpID" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectKey" Type="Edm.String" MaxLength="50"/>
+                <Property Name="ProjectTaskKey" Type="Edm.String" Nullable="false" MaxLength="50"/>
+                <Property Name="TaskDesc" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <Association Name="ToRoleAssctnType">
+                <End Type="default.usersminType" Role="usersminPrincipal" Multiplicity="1"/>
+                <End Type="default.user_role_textType" Role="user_role_textDependent" Multiplicity="*"/>
+            </Association>
+            <EntityContainer Name="v2" m:IsDefaultEntityContainer="true">
+                <EntitySet Name="orgs" EntityType="default.orgsType"/>
+                <EntitySet Name="sites" EntityType="default.sitesType"/>
+                <EntitySet Name="status" EntityType="default.statusType"/>
+                <EntitySet Name="user_type" EntityType="default.user_typeType"/>
+                <EntitySet Name="users" EntityType="default.usersType"/>
+                <EntitySet Name="visit_log" EntityType="default.visit_logType"/>
+                <EntitySet Name="usersmin" EntityType="default.usersminType"/>
+                <EntitySet Name="user_role" EntityType="default.user_roleType"/>
+                <EntitySet Name="role" EntityType="default.roleType"/>
+                <EntitySet Name="user_role_text" EntityType="default.user_role_textType"/>
+                <EntitySet Name="LeaveTypes" EntityType="default.LeaveTypesType"/>
+                <EntitySet Name="ProjectsData" EntityType="default.ProjectsDataType"/>
+                <EntitySet Name="Clients" EntityType="default.ClientsType"/>
+                <EntitySet Name="Priorities" EntityType="default.PrioritiesType"/>
+                <EntitySet Name="ProjectTypes" EntityType="default.ProjectTypesType"/>
+                <EntitySet Name="PredefinedBilling" EntityType="default.PredefinedBillingType"/>
+                <EntitySet Name="Assignments" EntityType="default.AssignmentsType"/>
+                <EntitySet Name="Attachments" EntityType="default.AttachmentsType"/>
+                <EntitySet Name="ProjectsAssignmentData" EntityType="default.ProjectsAssignmentDataType"/>
+                <EntitySet Name="UsersAssignmentData" EntityType="default.UsersAssignmentDataType"/>
+                <EntitySet Name="Client_Apps" EntityType="default.Client_AppsType"/>
+                <EntitySet Name="Softwares" EntityType="default.SoftwaresType"/>
+                <EntitySet Name="Components" EntityType="default.ComponentsType"/>
+                <EntitySet Name="SubComponents" EntityType="default.SubComponentsType"/>
+                <EntitySet Name="LicensedAppsData" EntityType="default.LicensedAppsDataType"/>
+                <EntitySet Name="BTPServices" EntityType="default.BTPServicesType"/>
+                <EntitySet Name="AppMaster" EntityType="default.AppMasterType"/>
+                <EntitySet Name="ClientAppServices" EntityType="default.ClientAppServicesType"/>
+                <EntitySet Name="ClientAppServiceView" EntityType="default.ClientAppServiceViewType"/>
+                <EntitySet Name="TrackAppUsage" EntityType="default.TrackAppUsageType"/>
+                <EntitySet Name="BTPClients" EntityType="default.BTPClientsType"/>
+                <EntitySet Name="Resources" EntityType="default.ResourcesType"/>
+                <EntitySet Name="UserTypes" EntityType="default.UserTypesType"/>
+                <EntitySet Name="Task" EntityType="default.TaskType"/>
+                <EntitySet Name="ProjectTask" EntityType="default.ProjectTaskType"/>
+                <EntitySet Name="PRIORITY" EntityType="default.PRIORITYType"/>
+                <EntitySet Name="CATEGORY" EntityType="default.CATEGORYType"/>
+                <EntitySet Name="SUBCATEGORY" EntityType="default.SUBCATEGORYType"/>
+                <EntitySet Name="STATUS" EntityType="default.STATUSType"/>
+                <EntitySet Name="UsersAssignmentDataTimesheet" EntityType="default.UsersAssignmentDataTimesheetType"/>
+                <EntitySet Name="PROJECTS_TEXTS" EntityType="default.PROJECTS_TEXTSType"/>
+                <EntitySet Name="INC_CATEGORY_TEXTS" EntityType="default.INC_CATEGORY_TEXTSType"/>
+                <EntitySet Name="INC_SUB_CATEGORY_TEXTS" EntityType="default.INC_SUB_CATEGORY_TEXTSType"/>
+                <EntitySet Name="INC_STATUS_TEXTS" EntityType="default.INC_STATUS_TEXTSType"/>
+                <EntitySet Name="INC_PRIORITY_TEXTS" EntityType="default.INC_PRIORITY_TEXTSType"/>
+                <EntitySet Name="TASK_TEXTS" EntityType="default.TASK_TEXTSType"/>
+                <EntitySet Name="Proj_Task_Assign_Text" EntityType="default.Proj_Task_Assign_TextType"/>
+                <EntitySet Name="Emp_Task_Assign_Text" EntityType="default.Emp_Task_Assign_TextType"/>
+                <AssociationSet Name="ToRoleAssctn" Association="default.ToRoleAssctnType">
+                    <End Role="usersminPrincipal" EntitySet="usersmin"/>
+                    <End Role="user_role_textDependent" EntitySet="user_role_text"/>
+                </AssociationSet>
+            </EntityContainer>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

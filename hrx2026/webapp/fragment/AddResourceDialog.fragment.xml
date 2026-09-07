@@ -1,0 +1,100 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="addResourceDialog"
+		title="{i18n>mrAddTitle}"
+		contentWidth="34rem"
+		busy="{mrView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="addResourceForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mrFieldFirstName}" required="true" />
+					<Input
+						id="newFirstName"
+						value="{mrNew>/FName}"
+						placeholder="{i18n>mrFieldFirstNamePlaceholder}"
+						liveChange=".onNewResourceFieldChange" />
+
+					<Label text="{i18n>mrFieldLastName}" required="true" />
+					<Input
+						id="newLastName"
+						value="{mrNew>/LName}"
+						placeholder="{i18n>mrFieldLastNamePlaceholder}"
+						liveChange=".onNewResourceFieldChange" />
+
+					<Label text="{i18n>mrFieldEmail}" required="true" />
+					<Input
+						id="newEmail"
+						value="{mrNew>/Email}"
+						type="Email"
+						placeholder="{i18n>mrFieldEmailPlaceholder}"
+						liveChange=".onNewResourceFieldChange" />
+
+					<Label text="{i18n>mrFieldMobile}" />
+					<Input
+						id="newMobile"
+						value="{mrNew>/Mobile}"
+						type="Tel"
+						placeholder="{i18n>mrFieldMobilePlaceholder}"
+						liveChange=".onNewResourceFieldChange" />
+
+					<Label text="{i18n>mrFieldLocation}" required="true" />
+					<ComboBox
+						id="newSite"
+						selectedKey="{mrNew>/BaseSiteKey}"
+						items="{mr>/sites}"
+						placeholder="{i18n>mrFieldLocationPlaceholder}"
+						showSecondaryValues="true"
+						selectionChange=".onNewResourceSelectionChange"
+						change=".onNewResourceSelectionChange">
+						<core:ListItem key="{mr>SiteID}" text="{mr>SiteLabel}" additionalText="{mr>SiteLocation}" />
+					</ComboBox>
+
+					<Label text="{i18n>mrFieldUserType}" required="true" />
+					<ComboBox
+						id="newUserType"
+						selectedKey="{mrNew>/UserTypeKey}"
+						items="{mr>/userTypes}"
+						placeholder="{i18n>mrFieldUserTypePlaceholder}"
+						selectionChange=".onNewResourceSelectionChange"
+						change=".onNewResourceSelectionChange">
+						<core:ListItem key="{mr>UserTypeKey}" text="{mr>UserTypeDesc}" />
+					</ComboBox>
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button
+				id="newResourceConfirm"
+				text="{i18n>mrAddConfirm}"
+				type="Emphasized"
+				press=".onCreateResource" />
+		</beginButton>
+		<endButton>
+			<Button
+				id="newResourceCancel"
+				text="{i18n>mrCancel}"
+				press=".onCancelAddResource" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

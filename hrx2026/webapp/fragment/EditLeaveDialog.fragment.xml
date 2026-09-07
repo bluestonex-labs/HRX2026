@@ -1,0 +1,87 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="editLeaveDialog"
+		title="{i18n>mlEditTitle}"
+		contentWidth="30rem"
+		busy="{mlView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="editLeaveForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mrLeaveColDate}" />
+					<Text id="editLeaveDate" text="{mlEdit>/DisplayDate}" />
+
+					<Label text="{i18n>mrLeaveColStatus}" />
+					<ObjectStatus
+						text="{mlEdit>/Status}"
+						state="{path: 'mlEdit>/StatusID', formatter: '.formatter.leaveStatusState'}" />
+
+					<Label text="{i18n>fieldLeaveType}" />
+					<ComboBox
+						id="editLeaveType"
+						selectedKey="{mlEdit>/LeaveTypeID}"
+						items="{ml>/leaveTypes}"
+						enabled="{mlEdit>/editable}"
+						placeholder="{i18n>mlLeaveTypePlaceholder}">
+						<core:ListItem key="{ml>LeaveCategoryId}" text="{ml>LeaveCategoryDesc}" />
+					</ComboBox>
+
+					<Label text="{i18n>fieldDuration}" />
+					<SegmentedButton
+						id="editLeaveAbsence"
+						selectedKey="{mlEdit>/Absence}"
+						enabled="{mlEdit>/editable}"
+						width="100%">
+						<items>
+							<SegmentedButtonItem text="{i18n>mlFullDay}" key="Full Day" />
+							<SegmentedButtonItem text="{i18n>mlAm}" key="AM" />
+							<SegmentedButtonItem text="{i18n>mlPm}" key="PM" />
+						</items>
+					</SegmentedButton>
+
+					<Label text="" visible="{= !${mlEdit>/editable} }" />
+					<MessageStrip
+						text="{i18n>mlDecidedNote}"
+						type="Information"
+						showIcon="true"
+						visible="{= !${mlEdit>/editable} }" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<buttons>
+			<Button
+				id="editLeaveSave"
+				text="{i18n>mlSave}"
+				type="Emphasized"
+				enabled="{mlEdit>/editable}"
+				press=".onUpdateLeave" />
+			<Button
+				id="editLeaveDelete"
+				text="{i18n>mlDelete}"
+				type="Reject"
+				enabled="{mlEdit>/editable}"
+				press=".onDeleteLeave" />
+			<Button id="editLeaveClose" text="{i18n>mlClose}" press=".onCloseEditLeave" />
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

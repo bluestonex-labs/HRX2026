@@ -1,0 +1,93 @@
+_schema-version: "3.2"
+ID: HRX2026
+version: 0.0.1
+modules:
+- name: HRX2026-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: HRX2026-destination-service
+    parameters:
+      content-target: true
+  - name: HRX2026_html_repo_host
+    parameters:
+      service-key:
+        name: HRX2026_html_repo_host-key
+  - name: uaa_HRX2026
+    parameters:
+      service-key:
+        name: uaa_HRX2026-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: hrx2026_HRX2026_html_repo_host
+          ServiceInstanceName: HRX2026-html5-app-host-service
+          ServiceKeyName: HRX2026_html_repo_host-key
+          sap.cloud.service: hrx2026
+        - Authentication: OAuth2UserTokenExchange
+          Name: hrx2026_uaa_HRX2026
+          ServiceInstanceName: HRX2026-xsuaa-service
+          ServiceKeyName: uaa_HRX2026-key
+          sap.cloud.service: hrx2026
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: HRX2026-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: HRX2026_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - bsxhrxhrx2026.zip
+      name: bsxhrxhrx2026
+      target-path: resources/
+- name: bsxhrxhrx2026
+  type: html5
+  path: hrx2026
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: HRX2026-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: HRX2026-destination-service
+    service-plan: lite
+- name: HRX2026_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: HRX2026-html5-app-host-service
+    service-plan: app-host
+- name: uaa_HRX2026
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: HRX2026-xsuaa-service
+    service-plan: application
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true

@@ -1,0 +1,32 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+
+	<Dialog
+		id="halfDayDialog"
+		title="{i18n>tcHalfDaysTitle}"
+		contentWidth="26rem">
+		<content>
+			<List
+				id="halfDayList"
+				items="{tc>/dates}"
+				noDataText="{i18n>tcNoBookableDays}">
+				<InputListItem label="{tc>displayDate}">
+					<SegmentedButton selectedKey="{tc>SelectedKey}" width="100%">
+						<items>
+							<SegmentedButtonItem text="{i18n>tcFullDay}" key="F" enabled="{tc>FullDayEnabled}" />
+							<SegmentedButtonItem text="{i18n>tcAm}" key="A" enabled="{tc>AMEnabled}" />
+							<SegmentedButtonItem text="{i18n>tcPm}" key="P" enabled="{tc>PMEnabled}" />
+						</items>
+					</SegmentedButton>
+				</InputListItem>
+			</List>
+		</content>
+		<beginButton>
+			<Button id="halfDayConfirm" text="{i18n>tcConfirm}" type="Emphasized" press=".onConfirmHalfDays" />
+		</beginButton>
+		<endButton>
+			<Button id="halfDayReset" text="{i18n>tcReset}" press=".onResetHalfDays" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

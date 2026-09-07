@@ -1,0 +1,66 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="clientServiceDialog"
+		title="{i18n>mcAddServiceTitle}"
+		contentWidth="32rem"
+		busy="{mcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="clientServiceForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mcFieldApp}" required="true" />
+					<ComboBox
+						id="serviceApp"
+						selectedKey="{mcForm>/AppID}"
+						items="{mc>/apps}"
+						showSecondaryValues="true"
+						placeholder="{i18n>mcFieldAppPlaceholder}">
+						<core:ListItem key="{mc>AppID}" text="{mc>AppDesc}" additionalText="{mc>AppType}" />
+					</ComboBox>
+
+					<Label text="{i18n>mcFieldService}" required="true" />
+					<ComboBox
+						id="serviceService"
+						selectedKey="{mcForm>/ServiceID}"
+						items="{mc>/services}"
+						showSecondaryValues="true"
+						placeholder="{i18n>mcFieldServicePlaceholder}">
+						<core:ListItem key="{mc>ServiceID}" text="{mc>ServiceDesc}" additionalText="{mc>ServiceID}" />
+					</ComboBox>
+
+					<Label text="{i18n>mcFieldValidFrom}" />
+					<DatePicker id="serviceValidFrom" dateValue="{mcForm>/ValidFrom}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mcFieldValidTill}" />
+					<DatePicker id="serviceValidTill" dateValue="{mcForm>/ValidTill}" valueFormat="yyyy-MM-dd" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="serviceConfirm" text="{i18n>mcSave}" type="Emphasized" press=".onSaveService" />
+		</beginButton>
+		<endButton>
+			<Button id="serviceCancel" text="{i18n>mcCancel}" press=".onCancelService" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

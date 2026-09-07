@@ -1,0 +1,57 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="slaDialog"
+		title="{= ${mcForm>/mode} === 'edit' ? ${i18n>mcEditSlaTitle} : ${i18n>mcAddSlaTitle} }"
+		contentWidth="32rem"
+		busy="{mcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="slaForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="5"
+				labelSpanL="5"
+				labelSpanM="5"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>mcFieldSeverity}" required="true" />
+					<ComboBox
+						id="slaSeverity"
+						selectedKey="{mcForm>/PriorityID}"
+						items="{mc>/priorities}"
+						showSecondaryValues="true"
+						enabled="{= ${mcForm>/mode} !== 'edit' }"
+						placeholder="{i18n>mcFieldSeverityPlaceholder}">
+						<core:ListItem key="{mc>PriorityID}" text="{mc>PriorityDesc}" additionalText="{mc>PriorityID}" />
+					</ComboBox>
+
+					<Label text="{i18n>mcFieldResponse}" required="true" />
+					<Input id="slaResponse" value="{mcForm>/ResponseSLA}" type="Number" placeholder="{i18n>mcFieldHoursPlaceholder}" />
+
+					<Label text="{i18n>mcFieldResolution}" required="true" />
+					<Input id="slaResolution" value="{mcForm>/ResolutionSLA}" type="Number" placeholder="{i18n>mcFieldHoursPlaceholder}" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="slaConfirm" text="{i18n>mcSave}" type="Emphasized" press=".onSaveSla" />
+		</beginButton>
+		<endButton>
+			<Button id="slaCancel" text="{i18n>mcCancel}" press=".onCancelSla" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,57 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+
+	<Dialog
+		id="leaveApprovalsDialog"
+		title="{i18n>tcApprovalsTitle}"
+		contentWidth="46rem"
+		contentHeight="32rem"
+		resizable="true"
+		busy="{tcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<List
+				id="leaveApprovalsList"
+				items="{tc>/approvals}"
+				noDataText="{i18n>tcNoApprovals}">
+				<NotificationListGroup
+					title="{tc>RequesterName}"
+					collapsed="false"
+					showCloseButton="false"
+					autoPriority="false"
+					items="{path: 'tc>LeaveList', templateShareable: true}">
+					<items>
+						<NotificationListItem
+							title="{tc>DisplayDate}"
+							authorName="{tc>LeaveType} · {tc>AbsenceType}"
+							description="{tc>RequesterComments}"
+							showCloseButton="false"
+							hideShowMoreButton="true"
+							authorPicture="{tc>icon}">
+							<buttons>
+								<Button
+									type="Accept"
+									icon="sap-icon://accept"
+									tooltip="{i18n>tcApprove}"
+									press=".onApproveLeave" />
+								<Button
+									type="Reject"
+									icon="sap-icon://decline"
+									tooltip="{i18n>tcReject}"
+									press=".onRejectLeave" />
+							</buttons>
+						</NotificationListItem>
+					</items>
+					<buttons>
+						<Button text="{i18n>tcApproveAll}" type="Accept" press=".onApproveLeave" />
+						<Button text="{i18n>tcRejectAll}" type="Reject" press=".onRejectLeave" />
+					</buttons>
+				</NotificationListGroup>
+			</List>
+		</content>
+		<endButton>
+			<Button id="leaveApprovalsClose" text="{i18n>tcClose}" press=".onCloseApprovals" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

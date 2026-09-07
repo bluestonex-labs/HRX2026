@@ -1,0 +1,516 @@
+<mvc:View
+	controllerName="bsx.hrx.hrx2026.controller.ManageResources"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:f="sap.f"
+	xmlns:form="sap.ui.layout.form"
+	xmlns:u="sap.ui.unified"
+	xmlns:core="sap.ui.core"
+	xmlns:microchart="sap.suite.ui.microchart"
+	displayBlock="true"
+	height="100%"
+	class="hrxManageResources">
+
+	<f:FlexibleColumnLayout
+		id="resourcesLayout"
+		layout="{mrView>/layout}"
+		backgroundDesign="Solid">
+
+		<!-- ============================= list column ============================= -->
+		<f:beginColumnPages>
+			<Page id="resourceListPage" title="{mrView>/title}" showNavButton="false">
+				<subHeader>
+					<OverflowToolbar id="resourceListToolbar">
+						<SearchField
+							id="resourceSearch"
+							value="{mrView>/searchQuery}"
+							liveChange=".onSearch"
+							search=".onSearch"
+							placeholder="{i18n>mrSearchPlaceholder}"
+							width="100%">
+							<layoutData>
+								<OverflowToolbarLayoutData minWidth="140px" shrinkable="true" priority="NeverOverflow" />
+							</layoutData>
+						</SearchField>
+						<Button
+							id="resourceFilterButton"
+							icon="sap-icon://filter"
+							type="Transparent"
+							tooltip="{i18n>mrFilterTooltip}"
+							press=".onOpenFilter" />
+						<Button
+							id="resourceAddButton"
+							icon="sap-icon://add-employee"
+							type="Transparent"
+							tooltip="{i18n>mrAddTooltip}"
+							press=".onOpenAddResource" />
+						<Button
+							id="resourceRefreshButton"
+							icon="sap-icon://refresh"
+							type="Transparent"
+							tooltip="{i18n>mrRefreshTooltip}"
+							press=".onRefresh" />
+					</OverflowToolbar>
+				</subHeader>
+
+				<List
+					id="resourceList"
+					items="{mr>/resources}"
+					mode="SingleSelectMaster"
+					busy="{mrView>/listBusy}"
+					busyIndicatorDelay="0"
+					noDataText="{i18n>mrListNoData}"
+					growing="true"
+					growingThreshold="40"
+					growingScrollToLoad="true"
+					selectionChange=".onResourceSelect">
+					<items>
+						<CustomListItem
+							type="Active"
+							press=".onResourcePress"
+							selected="{= ${mr>EmpID} === ${mrView>/selectedId} }">
+							<HBox
+								width="100%"
+								alignItems="Center"
+								justifyContent="SpaceBetween"
+								class="hrxResourceRow">
+								<HBox alignItems="Center">
+									<f:Avatar
+										displaySize="S"
+										backgroundColor="Accent6"
+										initials="{parts: ['mr>FName', 'mr>LName'], formatter: '.formatter.initials'}"
+										class="sapUiTinyMarginEnd" />
+									<VBox>
+										<Text text="{mr>FullName}" class="hrxResourceName" />
+										<Text text="{mr>Email}" class="hrxResourceMeta" />
+									</VBox>
+								</HBox>
+								<VBox alignItems="End" class="sapUiTinyMarginBegin">
+									<ObjectStatus
+										text="{path: 'mr>IsActive', formatter: '.formatter.activeText'}"
+										state="{path: 'mr>IsActive', formatter: '.formatter.activeState'}" />
+									<Text
+										class="hrxResourceMeta"
+										text="{path: 'mr>UserTypeKey', formatter: '.formatter.userTypeText'} · {mr>SiteName}" />
+								</VBox>
+							</HBox>
+						</CustomListItem>
+					</items>
+				</List>
+			</Page>
+		</f:beginColumnPages>
+
+		<!-- ============================ detail column ============================ -->
+		<f:midColumnPages>
+			<Page
+				id="resourceDetailPage"
+				busy="{= ${mrView>/detailBusy} || ${mrView>/saving} }"
+				busyIndicatorDelay="0">
+				<customHeader>
+					<Bar>
+						<contentLeft>
+							<Button
+								icon="sap-icon://nav-back"
+								type="Transparent"
+								tooltip="{i18n>mrCloseTooltip}"
+								press=".onCloseDetail"
+								visible="{device>/system/phone}" />
+						</contentLeft>
+						<contentMiddle>
+							<Title text="{mrDetail>/FullName}" level="H2" />
+						</contentMiddle>
+						<contentRight>
+							<Button
+								icon="{= ${mrView>/fullScreen} ? 'sap-icon://exit-full-screen' : 'sap-icon://full-screen' }"
+								type="Transparent"
+								tooltip="{i18n>mrFullScreenTooltip}"
+								press=".onToggleFullScreen"
+								visible="{= !${device>/system/phone} }" />
+							<Button
+								icon="sap-icon://decline"
+								type="Transparent"
+								tooltip="{i18n>mrCloseTooltip}"
+								press=".onCloseDetail"
+								visible="{= !${device>/system/phone} }" />
+						</contentRight>
+					</Bar>
+				</customHeader>
+
+				<content>
+					<HBox alignItems="Center" class="sapUiSmallMargin">
+						<f:Avatar
+							id="resourceDetailAvatar"
+							displaySize="L"
+							backgroundColor="Accent6"
+							src="{parts: ['mrDetail>/NewPic', 'mrDetail>/Pic'], formatter: '.formatter.pendingImageSrc'}"
+							initials="{parts: ['mrDetail>/FName', 'mrDetail>/LName'], formatter: '.formatter.initials'}"
+							class="sapUiMediumMarginEnd" />
+						<VBox>
+							<Title text="{mrDetail>/FullName}" level="H3" />
+							<Text text="{mrDetail>/Email}" class="hrxResourceMeta" />
+							<HBox alignItems="Center" class="sapUiTinyMarginTop">
+								<ObjectStatus
+									text="{path: 'mrDetail>/IsActive', formatter: '.formatter.activeText'}"
+									state="{path: 'mrDetail>/IsActive', formatter: '.formatter.activeState'}"
+									class="sapUiTinyMarginEnd" />
+								<Text
+									class="hrxResourceMeta"
+									text="{path: 'mrDetail>/UserTypeKey', formatter: '.formatter.userTypeText'} · {mrDetail>/SiteName}" />
+							</HBox>
+						</VBox>
+					</HBox>
+
+					<IconTabBar
+						id="resourceTabs"
+						expandable="false"
+						selectedKey="{mrView>/selectedTab}"
+						class="sapUiResponsiveContentPadding">
+						<items>
+
+							<!-- tab: info -->
+							<IconTabFilter
+								key="info"
+								text="{i18n>mrTabInfo}"
+								icon="sap-icon://hint"
+								tooltip="{i18n>mrTabInfo}">
+								<form:SimpleForm
+									id="resourceInfoForm"
+									editable="true"
+									layout="ResponsiveGridLayout"
+									labelSpanXL="4"
+									labelSpanL="4"
+									labelSpanM="4"
+									labelSpanS="12"
+									adjustLabelSpan="false"
+									emptySpanXL="0"
+									emptySpanL="1"
+									emptySpanM="0"
+									emptySpanS="0"
+									columnsXL="2"
+									columnsL="1"
+									columnsM="1"
+									singleContainerFullSize="false">
+									<form:content>
+										<Label text="{i18n>mrFieldFirstName}" required="true" />
+										<Input id="resourceFirstName" value="{mrDetail>/FName}" />
+
+										<Label text="{i18n>mrFieldLastName}" />
+										<Input id="resourceLastName" value="{mrDetail>/LName}" />
+
+										<Label text="{i18n>mrFieldEmail}" />
+										<Text id="resourceEmail" text="{mrDetail>/Email}" />
+
+										<Label text="{i18n>mrFieldMobile}" />
+										<Input id="resourceMobile" value="{mrDetail>/Mobile}" type="Tel" />
+
+										<Label text="{i18n>mrFieldLocation}" required="true" />
+										<ComboBox
+											id="resourceSite"
+											selectedKey="{mrDetail>/BaseSiteKey}"
+											items="{mr>/sites}"
+											placeholder="{i18n>mrFieldLocationPlaceholder}">
+											<core:ListItem key="{mr>SiteID}" text="{mr>SiteLabel}" additionalText="{mr>SiteLocation}" />
+										</ComboBox>
+
+										<Label text="{i18n>mrFieldUserType}" required="true" />
+										<ComboBox
+											id="resourceUserType"
+											selectedKey="{mrDetail>/UserTypeKey}"
+											items="{mr>/userTypes}"
+											placeholder="{i18n>mrFieldUserTypePlaceholder}">
+											<core:ListItem key="{mr>UserTypeKey}" text="{mr>UserTypeDesc}" />
+										</ComboBox>
+
+										<Label text="{i18n>mrFieldActive}" />
+										<Switch id="resourceActive" state="{mrDetail>/Active}" type="AcceptReject" />
+
+										<Label text="{i18n>mrFieldPicture}" />
+										<VBox>
+											<u:FileUploader
+												id="resourcePictureUploader"
+												name="resourcePicture"
+												uploadUrl=""
+												width="100%"
+												fileType="png,jpg,jpeg"
+												placeholder="{i18n>mrPicturePlaceholder}"
+												tooltip="{i18n>mrPictureTooltip}"
+												change=".onPictureChange"
+												typeMissmatch=".onPictureTypeMismatch" />
+											<Button
+												text="{i18n>mrRemovePicture}"
+												type="Transparent"
+												icon="sap-icon://delete"
+												press=".onRemovePicture"
+												class="sapUiTinyMarginTop"
+												visible="{= !!(${mrDetail>/NewPic} || ${mrDetail>/Pic}) }" />
+										</VBox>
+									</form:content>
+								</form:SimpleForm>
+							</IconTabFilter>
+
+							<!-- tab: manager -->
+							<IconTabFilter
+								key="manager"
+								text="{i18n>mrTabManager}"
+								icon="sap-icon://manager"
+								tooltip="{i18n>mrTabManager}">
+								<form:SimpleForm
+									id="resourceManagerForm"
+									editable="true"
+									layout="ResponsiveGridLayout"
+									labelSpanXL="4"
+									labelSpanL="4"
+									labelSpanM="4"
+									labelSpanS="12"
+									adjustLabelSpan="false"
+									emptySpanXL="0"
+									emptySpanL="1"
+									emptySpanM="0"
+									emptySpanS="0"
+									columnsXL="2"
+									columnsL="1"
+									columnsM="1"
+									singleContainerFullSize="false">
+									<form:content>
+										<Label text="{i18n>mrFieldManager}" />
+										<ComboBox
+											id="resourceManager"
+											selectedKey="{mrDetail>/ManagerID}"
+											items="{mr>/managers}"
+											showSecondaryValues="true"
+											placeholder="{i18n>mrFieldManagerPlaceholder}">
+											<core:ListItem key="{mr>EmpID}" text="{mr>FullName}" additionalText="{mr>SiteName}" />
+										</ComboBox>
+
+										<Label text="{i18n>mrFieldReportedManager}" />
+										<Text text="{= ${mrLeave>/user/managerName} || ${i18n>mrNoManager} }" />
+
+										<Label text="{i18n>mrFieldManagerEmail}" />
+										<Text text="{mrLeave>/user/managerEmail}" />
+									</form:content>
+								</form:SimpleForm>
+							</IconTabFilter>
+
+							<!-- tab: working time -->
+							<IconTabFilter
+								key="workingtime"
+								text="{i18n>mrTabWorkingTime}"
+								icon="sap-icon://work-history"
+								tooltip="{i18n>mrTabWorkingTime}">
+								<form:SimpleForm
+									id="resourceWorkingTimeForm"
+									editable="true"
+									layout="ResponsiveGridLayout"
+									labelSpanXL="4"
+									labelSpanL="4"
+									labelSpanM="4"
+									labelSpanS="12"
+									adjustLabelSpan="false"
+									emptySpanXL="0"
+									emptySpanL="1"
+									emptySpanM="0"
+									emptySpanS="0"
+									columnsXL="1"
+									columnsL="1"
+									columnsM="1"
+									singleContainerFullSize="false">
+									<form:content>
+										<Label text="{i18n>mrFieldTargetUtilisation}" />
+										<StepInput
+											id="resourceTargetUtilization"
+											value="{mrDetail>/TargetUtilization}"
+											displayValuePrecision="0"
+											min="0"
+											max="100"
+											step="5"
+											description="%"
+											width="12rem" />
+
+										<Label text="{i18n>mrFieldWeeklyTargetHours}" />
+										<MaskInput
+											id="resourceTargetHours"
+											value="{mrDetail>/TargetHrsPerWeek}"
+											mask="99:99"
+											placeholderSymbol="_"
+											placeholder="HH:mm"
+											width="8rem" />
+
+										<Label text="{i18n>mrFieldWorkSchedule}" />
+										<HBox wrap="Wrap">
+											<ToggleButton id="resourceDayMo" text="{i18n>mrDayMo}" pressed="{mrDetail>/days/Mo}" class="sapUiTinyMarginEnd" />
+											<ToggleButton id="resourceDayTu" text="{i18n>mrDayTu}" pressed="{mrDetail>/days/Tu}" class="sapUiTinyMarginEnd" />
+											<ToggleButton id="resourceDayWe" text="{i18n>mrDayWe}" pressed="{mrDetail>/days/We}" class="sapUiTinyMarginEnd" />
+											<ToggleButton id="resourceDayTh" text="{i18n>mrDayTh}" pressed="{mrDetail>/days/Th}" class="sapUiTinyMarginEnd" />
+											<ToggleButton id="resourceDayFr" text="{i18n>mrDayFr}" pressed="{mrDetail>/days/Fr}" class="sapUiTinyMarginEnd" />
+											<ToggleButton id="resourceDaySa" text="{i18n>mrDaySa}" pressed="{mrDetail>/days/Sa}" class="sapUiTinyMarginEnd" />
+											<ToggleButton id="resourceDaySu" text="{i18n>mrDaySu}" pressed="{mrDetail>/days/Su}" />
+										</HBox>
+
+										<Label text="{i18n>mrFieldAnnualLeaveQuota}" />
+										<StepInput
+											id="resourceLeaveQuota"
+											value="{mrDetail>/AnnualLeaveQuota}"
+											displayValuePrecision="1"
+											min="0"
+											max="50"
+											step="1"
+											width="12rem" />
+									</form:content>
+								</form:SimpleForm>
+							</IconTabFilter>
+
+							<!-- tab: reward and benefits -->
+							<IconTabFilter
+								key="reward"
+								text="{i18n>mrTabReward}"
+								icon="sap-icon://money-bills"
+								tooltip="{i18n>mrTabReward}">
+								<form:SimpleForm
+									id="resourceRewardForm"
+									editable="true"
+									layout="ResponsiveGridLayout"
+									labelSpanXL="4"
+									labelSpanL="4"
+									labelSpanM="4"
+									labelSpanS="12"
+									adjustLabelSpan="false"
+									emptySpanXL="0"
+									emptySpanL="1"
+									emptySpanM="0"
+									emptySpanS="0"
+									columnsXL="2"
+									columnsL="1"
+									columnsM="1"
+									singleContainerFullSize="false">
+									<form:content>
+										<Label text="{i18n>mrFieldBonus}" />
+										<StepInput
+											id="resourceBonus"
+											value="{mrDetail>/BonusPercent}"
+											displayValuePrecision="0"
+											min="0"
+											max="100"
+											step="1"
+											description="%"
+											width="12rem" />
+
+										<Label text="{i18n>mrFieldPension}" />
+										<StepInput
+											id="resourcePension"
+											value="{mrDetail>/PensionRate}"
+											displayValuePrecision="0"
+											min="0"
+											max="100"
+											step="1"
+											description="%"
+											width="12rem" />
+									</form:content>
+								</form:SimpleForm>
+							</IconTabFilter>
+
+							<!-- tab: leave taken -->
+							<IconTabFilter
+								key="leave"
+								text="{i18n>mrTabLeave}"
+								icon="sap-icon://general-leave-request"
+								tooltip="{i18n>mrTabLeave}">
+								<VBox busy="{mrView>/leaveBusy}" busyIndicatorDelay="0">
+									<HBox wrap="Wrap" class="sapUiSmallMarginBottom">
+										<VBox class="sapUiMediumMarginEnd">
+											<NumericContent
+												value="{mrLeave>/user/annualLeaveQuota}"
+												withMargin="false"
+												valueColor="Neutral" />
+											<Text text="{i18n>mrLeaveQuotaLabel}" class="hrxResourceMeta" />
+										</VBox>
+										<VBox class="sapUiMediumMarginEnd">
+											<NumericContent
+												value="{mrLeave>/user/noOfAvailedLeaves}"
+												withMargin="false"
+												valueColor="Critical" />
+											<Text text="{i18n>mrLeaveTakenLabel}" class="hrxResourceMeta" />
+										</VBox>
+										<VBox class="sapUiMediumMarginEnd">
+											<NumericContent
+												value="{mrLeave>/user/balanceLeaves}"
+												withMargin="false"
+												valueColor="Good" />
+											<Text text="{i18n>mrLeaveBalanceLabel}" class="hrxResourceMeta" />
+										</VBox>
+										<VBox>
+											<NumericContent
+												value="{path: 'mrLeave>/bankHolidays', formatter: '.formatter.count'}"
+												withMargin="false"
+												valueColor="Neutral" />
+											<Text text="{i18n>mrLeaveBankHolidaysLabel}" class="hrxResourceMeta" />
+										</VBox>
+									</HBox>
+
+									<VBox
+										class="sapUiSmallMarginBottom"
+										visible="{path: 'mrLeave>/analyticsData', formatter: '.formatter.hasItems'}">
+										<Text text="{i18n>mrLeaveByTypeLabel}" class="hrxEyebrow sapUiTinyMarginBottom" />
+										<microchart:ComparisonMicroChart
+											id="resourceLeaveChart"
+											size="Responsive"
+											width="100%"
+											data="{mrLeave>/analyticsData}">
+											<microchart:ComparisonMicroChartData
+												title="{mrLeave>LeaveType}"
+												value="{mrLeave>Days}"
+												color="{path: 'mrLeave>LeaveType', formatter: '.formatter.leaveTypeColor'}" />
+										</microchart:ComparisonMicroChart>
+									</VBox>
+
+									<Table
+										id="resourceLeaveTable"
+										items="{mrLeave>/availedLeaves}"
+										noDataText="{i18n>mrLeaveNoData}"
+										alternateRowColors="true"
+										growing="true"
+										growingScrollToLoad="true"
+										fixedLayout="false">
+										<columns>
+											<Column width="30%"><Text text="{i18n>mrLeaveColDate}" /></Column>
+											<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>mrLeaveColType}" /></Column>
+											<Column hAlign="End"><Text text="{i18n>mrLeaveColStatus}" /></Column>
+										</columns>
+										<items>
+											<ColumnListItem type="Inactive">
+												<cells>
+													<Text text="{mrLeave>DisplayDate}" />
+													<Text text="{mrLeave>LeaveType} — {mrLeave>Absence}" />
+													<ObjectStatus
+														text="{mrLeave>Status}"
+														state="{path: 'mrLeave>StatusID', formatter: '.formatter.leaveStatusState'}" />
+												</cells>
+											</ColumnListItem>
+										</items>
+									</Table>
+								</VBox>
+							</IconTabFilter>
+						</items>
+					</IconTabBar>
+				</content>
+
+				<footer>
+					<OverflowToolbar id="resourceDetailFooter">
+						<ToolbarSpacer />
+						<Button
+							id="resourceDeleteButton"
+							text="{i18n>mrDelete}"
+							icon="sap-icon://delete"
+							type="Reject"
+							press=".onDelete" />
+						<Button
+							id="resourceSaveButton"
+							text="{i18n>mrSave}"
+							icon="sap-icon://save"
+							type="Emphasized"
+							press=".onSave" />
+					</OverflowToolbar>
+				</footer>
+			</Page>
+		</f:midColumnPages>
+	</f:FlexibleColumnLayout>
+</mvc:View>

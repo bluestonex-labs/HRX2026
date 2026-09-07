@@ -1,0 +1,112 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="clientComponentDialog"
+		title="{= ${mcForm>/mode} === 'edit' ? ${i18n>mcEditComponentTitle} : ${i18n>mcAddComponentTitle} }"
+		contentWidth="44rem"
+		busy="{mcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="clientComponentForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="2"
+				columnsL="2"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<core:Title text="{i18n>mcSectionComponent}" />
+
+					<Label text="{i18n>mcFieldSoftware}" required="true" />
+					<ComboBox
+						id="componentSoftware"
+						selectedKey="{mcForm>/Software}"
+						items="{mc>/softwares}"
+						showSecondaryValues="true"
+						selectionChange=".onSoftwareChange"
+						placeholder="{i18n>mcFieldSoftwarePlaceholder}">
+						<core:ListItem key="{mc>AppID}" text="{mc>AppName}" additionalText="{mc>AppType}" />
+					</ComboBox>
+
+					<Label text="{i18n>mcFieldComponent}" />
+					<ComboBox
+						id="componentComponent"
+						selectedKey="{mcForm>/Component}"
+						items="{mc>/componentChoices}"
+						selectionChange=".onComponentChange"
+						placeholder="{i18n>mcFieldComponentPlaceholder}">
+						<core:ListItem key="{mc>ComponentID}" text="{mc>ComponentName}" />
+					</ComboBox>
+
+					<Label text="{i18n>mcFieldSubComponent}" />
+					<ComboBox
+						id="componentSubComponent"
+						selectedKey="{mcForm>/SubComponent}"
+						items="{mc>/subComponentChoices}"
+						placeholder="{i18n>mcFieldSubComponentPlaceholder}">
+						<core:ListItem key="{mc>SubComponentID}" text="{mc>SubComponentName}" />
+					</ComboBox>
+
+					<Label text="{i18n>mcFieldValidFrom}" />
+					<DatePicker id="componentValidFrom" dateValue="{mcForm>/ValidFrom}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mcFieldValidTill}" />
+					<DatePicker id="componentValidTill" dateValue="{mcForm>/ValidTill}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mcFieldSupported}" />
+					<Switch id="componentSupported" state="{mcForm>/IsSupported}" customTextOn="{i18n>mcYes}" customTextOff="{i18n>mcNo}" />
+
+					<core:Title text="{i18n>mcSectionSystem}" />
+
+					<Label text="{i18n>mcFieldSystemNo}" />
+					<Input id="componentSystemNo" value="{mcForm>/SystemNo}" />
+
+					<Label text="{i18n>mcFieldInstallDate}" />
+					<DatePicker id="componentInstallDate" dateValue="{mcForm>/InstallDate}" valueFormat="yyyy-MM-dd" />
+
+					<Label text="{i18n>mcFieldSapVersion}" />
+					<Input id="componentSapVersion" value="{mcForm>/SAPVersion}" />
+
+					<Label text="{i18n>mcFieldObjectCost}" />
+					<Input id="componentObjectCost" value="{mcForm>/ObjectCost}" type="Number" />
+
+					<Label text="{i18n>mcFieldSupportCost}" />
+					<Input id="componentSupportCost" value="{mcForm>/SupportCost}" type="Number" />
+
+					<Label text="{i18n>mcFieldCloudCustomer}" />
+					<Switch id="componentCloud" state="{mcForm>/IsCloudCustomer}" customTextOn="{i18n>mcYes}" customTextOff="{i18n>mcNo}" />
+
+					<core:Title text="{i18n>mcSectionMessages}" />
+
+					<Label text="{i18n>mcFieldShowWarning}" />
+					<Switch id="componentShowWarning" state="{mcForm>/ShowWarning}" customTextOn="{i18n>mcShow}" customTextOff="{i18n>mcHide}" />
+
+					<Label text="{i18n>mcFieldWarningMessage}" />
+					<TextArea id="componentWarningMessage" value="{mcForm>/WarningMessage}" rows="3" width="100%" growing="true" />
+
+					<Label text="{i18n>mcFieldHardMessage}" />
+					<TextArea id="componentHardMessage" value="{mcForm>/HardMessage}" rows="3" width="100%" growing="true" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button id="componentConfirm" text="{i18n>mcSave}" type="Emphasized" press=".onSaveComponent" />
+		</beginButton>
+		<endButton>
+			<Button id="componentCancel" text="{i18n>mcCancel}" press=".onCancelComponent" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

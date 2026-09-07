@@ -1,0 +1,92 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:form="sap.ui.layout.form">
+
+	<Dialog
+		id="bookLeaveDialog"
+		title="{i18n>tcBookLeaveTitle}"
+		contentWidth="34rem"
+		busy="{tcView>/saving}"
+		busyIndicatorDelay="0">
+		<content>
+			<form:SimpleForm
+				id="bookLeaveForm"
+				editable="true"
+				layout="ResponsiveGridLayout"
+				labelSpanXL="4"
+				labelSpanL="4"
+				labelSpanM="4"
+				labelSpanS="12"
+				adjustLabelSpan="false"
+				emptySpanXL="0"
+				emptySpanL="0"
+				emptySpanM="0"
+				emptySpanS="0"
+				columnsXL="1"
+				columnsL="1"
+				columnsM="1"
+				singleContainerFullSize="false">
+				<form:content>
+					<Label text="{i18n>tcFieldEmployee}" required="true" />
+					<ComboBox
+						id="bookLeaveEmployee"
+						selectedKey="{tcForm>/EmpID}"
+						items="{tc>/reportees}"
+						showSecondaryValues="true"
+						selectionChange=".onEmployeeChange"
+						change=".onEmployeeChange"
+						placeholder="{i18n>tcFieldEmployeePlaceholder}">
+						<core:ListItem key="{tc>EmpID}" text="{tc>FullName}" additionalText="{tc>Email}" />
+					</ComboBox>
+
+					<Label text="{i18n>tcFieldDates}" required="true" />
+					<DateRangeSelection
+						id="bookLeaveDates"
+						change=".onLeaveDatesChange"
+						valueFormat="yyyy-MM-dd"
+						placeholder="{i18n>tcFieldDatesPlaceholder}" />
+
+					<Label text="{i18n>tcFieldLeaveType}" />
+					<ComboBox
+						id="bookLeaveType"
+						selectedKey="{tcForm>/LeaveCategoryId}"
+						items="{tc>/leaveTypes}"
+						placeholder="{i18n>tcFieldLeaveTypePlaceholder}">
+						<core:ListItem key="{tc>LeaveCategoryId}" text="{tc>LeaveCategoryDesc}" />
+					</ComboBox>
+
+					<Label text="{i18n>tcFieldDays}" />
+					<HBox alignItems="Center">
+						<ObjectNumber
+							number="{tcForm>/NoOfDays}"
+							unit="{i18n>tcDays}"
+							state="{= ${tcForm>/NoOfDays} > 0 ? 'Success' : 'None' }"
+							class="sapUiSmallMarginEnd" />
+						<Button
+							id="bookLeaveHalfDays"
+							text="{i18n>tcHalfDays}"
+							type="Transparent"
+							icon="sap-icon://time-entry-request"
+							press=".onOpenHalfDays"
+							enabled="{= ${tcForm>/NoOfDays} > 0 }" />
+					</HBox>
+
+					<Label text="{i18n>tcFieldComments}" />
+					<TextArea id="bookLeaveComments" value="{tcForm>/Comments}" rows="2" width="100%" placeholder="{i18n>tcOptional}" />
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<beginButton>
+			<Button
+				id="bookLeaveConfirm"
+				text="{i18n>tcBookLeaveConfirm}"
+				type="Emphasized"
+				enabled="{= ${tcForm>/NoOfDays} > 0 }"
+				press=".onBookLeave" />
+		</beginButton>
+		<endButton>
+			<Button id="bookLeaveCancel" text="{i18n>tcCancel}" press=".onCancelBookLeave" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>
