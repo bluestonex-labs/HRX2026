@@ -5,9 +5,9 @@
 	<Dialog
 		id="addTimesheetProjectsDialog"
 		title="{i18n>tsAddProjectsTitle}"
-		contentWidth="40rem"
+		contentWidth="auto"
 		contentHeight="28rem"
-		resizable="true"
+		resizable="false"
 		busy="{tsView>/saving}"
 		busyIndicatorDelay="0"
 		class="hrxPickerDialog">

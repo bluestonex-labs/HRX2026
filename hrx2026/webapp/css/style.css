@@ -213,7 +213,7 @@ body.sapUiBody {
 .hrxCrumbBar {
 	background: var(--surface);
 	border-bottom: 1px solid var(--line-soft);
-	padding: 16px 28px 12px 28px;
+	padding: 15px 28px 12px 28px;
 	flex-shrink: 0;
 }
 
@@ -291,7 +291,7 @@ body.sapUiBody {
 }
 
 .hrxHealthStrip {
-	padding: 12px 0 0;
+	margin-left: 1in;
 	flex-shrink: 0;
 }
 
@@ -761,11 +761,15 @@ body.sapUiBody {
 /* Padding rather than margin: the row is 100% wide and box-sizing is border-box,
    so a horizontal margin would push the row past the list and scroll the page. */
 .hrxResourceRow {
-	padding: 11px 20px;
+	padding: 14px 20px;
 }
 
 .hrxProjectIcon {
 	color: var(--ice-deep);
+}
+
+.hrxComment {
+	padding-bottom: 42px;
 }
 
 /* ── MANAGE RESOURCES / CLIENTS / PROJECTS ────────────────────────────────── */
@@ -1342,13 +1346,32 @@ body.sapUiBody {
 
 /* Recolours the leave calendar's day markers and legend swatches (both read the
    same theme parameter as CSS variables) to match img/legends.png instead of
-   the theme default palette. sapLegendColor1-5 back Type01-Type05. */
-.hrxMyLeave {
+   the theme default palette. sapLegendColor1-5 back Type01-Type05.
+
+   Team Calendar's appointments (sap.ui.unified.CalendarAppointment, rendered
+   by PlanningCalendarRow) read the same Type01-05 day types, so it shares this
+   palette to keep its appointments in step with the ones on My Leave.
+   CalendarAppointment paints its border from sapLegendColorN but its actual
+   fill from the separate sapLegendBackgroundColorN (see base_CalendarRow.less
+   in sap.ui.unified) - overriding only the first, as an earlier pass here did,
+   recolours the CalendarLegendItem swatch (which reads sapLegendColorN alone)
+   but leaves the appointment body on the theme default. Both are set to the
+   same values here so the appointment renders as one solid block matching the
+   legend, not a two-tone border/fill split. */
+.hrxMyLeave, .hrxTeamCalendar {
 	--sapLegendColor1: #96C2FA; /* Holiday */
 	--sapLegendColor2: #BB98C5; /* Sick */
 	--sapLegendColor3: #EB7F5D; /* Unpaid */
 	--sapLegendColor4: #F7CB48; /* Compassionate */
 	--sapLegendColor5: #ABC3D2; /* Bank holiday */
+}
+
+.hrxTeamCalendar {
+	--sapLegendBackgroundColor1: #96C2FA; /* Holiday */
+	--sapLegendBackgroundColor2: #BB98C5; /* Sick */
+	--sapLegendBackgroundColor3: #EB7F5D; /* Unpaid */
+	--sapLegendBackgroundColor4: #F7CB48; /* Compassionate */
+	--sapLegendBackgroundColor5: #ABC3D2; /* Bank holiday */
 }
 
 /* The legend's "Today" swatch border is theme-compiled to a literal colour
@@ -1449,4 +1472,48 @@ body.sapUiBody {
 	font-size: 13px;
 	font-weight: 700;
 	color: var(--txt);
+}
+
+.sapUiCalendarAppType01.sapUiCalendarApp,.sapUiCalendarAppType01.sapUiCalendarApp:active {
+    border-left-color: var(--sapLegendColor1);
+}
+
+.sapUiCalendarRowVisFilled>.sapUiCalendarRowApps>.sapUiCalendarAppType01.sapUiCalendarApp:not(.sapUiCalendarAppSel)>.sapUiCalendarAppCont {
+    background-color: var(--sapLegendColor1);
+}
+
+.sapUiCalendarAppType02.sapUiCalendarApp,.sapUiCalendarAppType02.sapUiCalendarApp:active {
+    border-left-color: var(--sapLegendColor2)
+}
+
+.sapUiCalendarRowVisFilled>.sapUiCalendarRowApps>.sapUiCalendarAppType02.sapUiCalendarApp:not(.sapUiCalendarAppSel)>.sapUiCalendarAppCont {
+    background-color: var(--sapLegendColor2);
+}
+
+.sapUiCalendarAppType03.sapUiCalendarApp,.sapUiCalendarAppType03.sapUiCalendarApp:active {
+    border-left-color: var(--sapLegendColor3)
+}
+
+.sapUiCalendarRowVisFilled>.sapUiCalendarRowApps>.sapUiCalendarAppType03.sapUiCalendarApp:not(.sapUiCalendarAppSel)>.sapUiCalendarAppCont {
+    background-color: var(--sapLegendColor3);
+}
+
+.sapUiCalendarAppType04.sapUiCalendarApp,.sapUiCalendarAppType04.sapUiCalendarApp:active {
+    border-left-color: var(--sapLegendColor4)
+}
+
+.sapUiCalendarRowVisFilled>.sapUiCalendarRowApps>.sapUiCalendarAppType04.sapUiCalendarApp:not(.sapUiCalendarAppSel)>.sapUiCalendarAppCont {
+    background-color: var(--sapLegendColor4);
+}
+
+.sapUiCalendarAppType05.sapUiCalendarApp,.sapUiCalendarAppType05.sapUiCalendarApp:active {
+    border-left-color: var(--sapLegendColor5)
+}
+
+.sapUiCalendarRowVisFilled>.sapUiCalendarRowApps>.sapUiCalendarAppType05.sapUiCalendarApp:not(.sapUiCalendarAppSel)>.sapUiCalendarAppCont {
+    background-color: var(--sapLegendColor5);
+}
+
+.sapSuiteCpMCVerticalAlignmentContainer {
+    max-width: 100%;
 }

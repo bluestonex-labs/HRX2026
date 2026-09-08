@@ -194,7 +194,7 @@
 								enabled="{home>/quick/dayEditable}"
 								rows="2"
 								width="100%"
-								class="sapUiTinyMarginBottom"
+								class="sapUiTinyMarginBottom hrxComment"
 								placeholder="{i18n>qtCommentPlaceholder}" />
 
 							<Button
