@@ -89,7 +89,17 @@ sap.ui.define([
 		 */
 		_onRouteMatched: function () {
 			this.getModel("tsView").setProperty("/weekStart", this._mondayOf(new Date()));
-			this._pDirectoryLoaded.then(this._loadWeek.bind(this));
+
+			// Every entry to the screen starts on whoever is signed in, with their own
+			// name showing in the picker - the view is reused across navigations, so
+			// without this it would come back holding whatever was last looked at.
+			this._sViewAsEmail = this._sUserEmail;
+			this.getModel("tsView").setProperty("/currentEmail", this._sUserEmail);
+
+			this._pDirectoryLoaded.then(function () {
+				this._restoreViewAs();
+				return this._loadWeek();
+			}.bind(this));
 		},
 
 		/**
@@ -273,6 +283,9 @@ sap.ui.define([
 					// Billable work booked beyond what the assignment allows for.
 					Overbooked: oAssignment.ProjectTypeText === "Billable" && iBilled > iBillable,
 					readOnly: false,
+					// BlueStoneX's own projects are pinned to every sheet by _defaultRows
+					// and are not the user's to remove, so they cannot be selected.
+					deletable: oAssignment.ClientKey !== INTERNAL_CLIENT,
 					days: this._buildDays(aDates)
 				};
 			}, this);
@@ -341,7 +354,9 @@ sap.ui.define([
 				{ key: "bankHolidays", label: this.getText("tsBankHoliday") },
 				{ key: "leaves", label: this.getText("tsLeave") }
 			].forEach(function (oSource) {
-				var aEntries = oData[oSource.key] || [];
+				var aEntries = oSource.key === "leaves"
+					? Backend.countedLeaves(oData.leaves)
+					: (oData[oSource.key] || []);
 				if (!aEntries.length) {
 					return;
 				}
@@ -357,6 +372,7 @@ sap.ui.define([
 					Billable: false,
 					Overbooked: false,
 					readOnly: true,
+					deletable: false,
 					days: this._buildDays(aDates)
 				};
 
@@ -410,7 +426,7 @@ sap.ui.define([
 		_nonWorkingDates: function (oData) {
 			var mDates = {};
 
-			(oData.leaves || []).concat(oData.bankHolidays || []).forEach(function (oEntry) {
+			Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
 				mDates[String(oEntry.Date).slice(0, 10)] = true;
 			});
 
@@ -475,7 +491,7 @@ sap.ui.define([
 
 			// Leave and bank holidays in this week reduce the hours the user owes.
 			var iTargetMinutes = this._toMinutes(oUser.targetHrsPerWeek);
-			iTargetMinutes -= (oData.leaves || []).reduce(function (iTotal, oEntry) {
+			iTargetMinutes -= Backend.countedLeaves(oData.leaves).reduce(function (iTotal, oEntry) {
 				return iTotal + this._toMinutes(oEntry.Hours);
 			}.bind(this), 0);
 			iTargetMinutes -= (oData.bankHolidays || []).filter(function (oEntry) {
@@ -587,14 +603,62 @@ sap.ui.define([
 		onViewAsChange: function (oEvent) {
 			var sEmail = oEvent.getSource().getSelectedKey();
 			if (!sEmail) {
+				// The picker has been cleared. Nothing to load, and the week already on
+				// screen still belongs to _sViewAsEmail, so leave it be - onRefresh is
+				// where an empty picker gets answered.
 				return;
 			}
+			this._sViewAsEmail = sEmail;
 			this.getModel("tsView").setProperty("/currentEmail", sEmail);
 			this._loadWeek();
 		},
 
+		/**
+		 * Reloads the week on screen. Clearing the "viewing as" picker leaves no user to
+		 * load, so rather than silently reloading whoever was there before - or asking
+		 * the service for an empty Email, which matches everybody - say what is missing
+		 * and put the last valid person back.
+		 */
 		onRefresh: function () {
+			var oViewModel = this.getModel("tsView");
+			var oViewAs = this.byId("timesheetViewAs");
+
+			if (oViewModel.getProperty("/isManager") && oViewAs && !oViewAs.getSelectedKey()) {
+				MessageBox.information(this.getText("tsSelectUser"));
+				this._restoreViewAs();
+			}
+
 			this._loadWeek();
+		},
+
+		/**
+		 * Puts the "viewing as" picker back to the last person actually chosen, falling
+		 * back to whoever is signed in.
+		 */
+		_restoreViewAs: function () {
+			var sEmail = this._sViewAsEmail || this._sUserEmail;
+			var oViewAs = this.byId("timesheetViewAs");
+
+			this.getModel("tsView").setProperty("/currentEmail", sEmail);
+			if (oViewAs) {
+				// setSelectedKey alone leaves the typed-into text box empty, so the name
+				// is written back from the directory entry as well.
+				oViewAs.setSelectedKey(sEmail);
+				oViewAs.setValue(this._viewAsName(sEmail));
+				oViewAs.setValueState("None");
+			}
+		},
+
+		/**
+		 * @param {string} sEmail the resource's email
+		 * @returns {string} that resource's name from the directory, or the email itself
+		 */
+		_viewAsName: function (sEmail) {
+			var aDirectory = this.getModel("ts").getProperty("/directory") || [];
+			var oMatch = aDirectory.filter(function (oResource) {
+				return oResource.Email === sEmail;
+			})[0];
+			return (oMatch && oMatch.FullName) || sEmail;
 		},
 
 		/* =========================================================== */
@@ -697,8 +761,44 @@ sap.ui.define([
 			this._sCommentPath = null;
 		},
 
+		/**
+		 * Keeps the selection to rows that may actually be deleted. sap.m.Table has no
+		 * per-row switch for this, and its checkbox is hidden by CSS for the rest, but
+		 * "select all" still reaches them - so anything not deletable is dropped again
+		 * here before the count that enables the Delete button is taken.
+		 * @param {sap.ui.base.Event} oEvent the selectionChange event
+		 */
 		onSelectionChange: function (oEvent) {
-			this.getModel("tsView").setProperty("/selectedCount", oEvent.getSource().getSelectedItems().length);
+			var oTable = oEvent.getSource();
+			var bRefused = false;
+
+			oTable.getSelectedItems().forEach(function (oItem) {
+				var oContext = oItem.getBindingContext("ts");
+				var oRow = oContext && oContext.getObject();
+				if (oRow && oRow.deletable === false) {
+					oTable.setSelectedItem(oItem, false);
+					bRefused = true;
+				}
+			});
+
+			// if (bRefused) {
+			// 	MessageToast.show(this.getText("tsRowNotDeletable"));
+			// }
+
+			this.getModel("tsView").setProperty("/selectedCount", oTable.getSelectedItems().length);
+		},
+
+		/**
+		 * Drops every tick in the grid and the count behind the Delete button.
+		 * selectionChange does not fire for a programmatic clear, so the count has to
+		 * be put back by hand.
+		 */
+		_clearTableSelection: function () {
+			var oTable = this.byId("timesheetTable");
+			if (oTable) {
+				oTable.removeSelections(true);
+			}
+			this.getModel("tsView").setProperty("/selectedCount", 0);
 		},
 
 		/* =========================================================== */
@@ -776,6 +876,7 @@ sap.ui.define([
 					Billable: oAssignment.ProjectTypeText === "Billable",
 					Overbooked: false,
 					readOnly: false,
+					deletable: oAssignment.ClientKey !== INTERNAL_CLIENT,
 					days: this._buildDays(aDates)
 				});
 			}, this);
@@ -815,7 +916,16 @@ sap.ui.define([
 			var aRows = this.getModel("ts").getProperty("/rows") || [];
 			var aSelectedRows = aSelected.map(function (oItem) {
 				return oItem.getBindingContext("ts").getObject();
+			}).filter(function (oRow) {
+				// onSelectionChange already refuses these, so this only guards against a
+				// selection set some other way - but deleting one must never be possible.
+				return oRow.deletable !== false;
 			});
+
+			if (!aSelectedRows.length) {
+				MessageToast.show(this.getText("tsRowNotDeletable"));
+				return;
+			}
 			var aNames = aSelectedRows.map(function (oRow) {
 				return oRow.project;
 			}).join(", ");
@@ -844,8 +954,7 @@ sap.ui.define([
 
 					var fnFinish = function () {
 						this.getModel("ts").setProperty("/rows", aRemaining);
-						oTable.removeSelections(true);
-						this.getModel("tsView").setProperty("/selectedCount", 0);
+						this._clearTableSelection();
 						this._recalculate();
 					}.bind(this);
 
@@ -854,13 +963,19 @@ sap.ui.define([
 						return;
 					}
 
+					// Rows carrying booked time go through the service and come back via
+					// _loadWeek. That rebuilds the rows but leaves the table's own
+					// selection behind, so the ticks - and the count that enables the
+					// Delete button - have to be cleared here as well, on the way out
+					// whether the delete succeeded or not.
 					this._save(TIMESHEET_SERVICE + "?cmd=delete", {
 						OrgID: this._sOrgId,
 						UserID: this.getModel("tsView").getProperty("/userId"),
 						TimesheetListSet: aRecIds
 					}, "tsDeleted", "tsErrorDelete").then(function () {
 						return this._loadWeek();
-					}.bind(this)).catch(function () { /* reported by _save */ });
+					}.bind(this)).catch(function () { /* reported by _save */ })
+						.then(this._clearTableSelection.bind(this));
 				}.bind(this)
 			});
 		},

@@ -208,6 +208,15 @@
 					</columns>
 					<items>
 						<ColumnListItem vAlign="Middle" selected="false">
+							<!-- A real data-* attribute rather than a bound class, which does
+							     not evaluate on `class`. Written as the string "true"/"false":
+							     writeToDom drops a raw boolean false entirely. -->
+							<customData>
+								<core:CustomData
+									key="deletable"
+									value="{= ${ts>deletable} === false ? 'false' : 'true' }"
+									writeToDom="true" />
+							</customData>
 							<cells>
 								<VBox>
 									<ObjectIdentifier title="{ts>project}" />

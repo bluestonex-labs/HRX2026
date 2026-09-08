@@ -37,7 +37,11 @@ server:
         backend:
           - path: /services
             url: https://bsx-tdd-tdd-bsx-org-apps-services-v2.cfapps.eu10.hana.ondemand.com
-            destination: bsxorgappsservices
+            # destination: bsxorgappsservices
+            # Left out on purpose for local runs: fiori-tools-proxy sends the
+            # request to https://bsxorgappsservices.dest, which answers 502 here,
+            # while url: above reaches the service directly. The destination name
+            # still applies once deployed - xs-app.json carries it.
     - name: sap-fe-mockserver
       beforeMiddleware: csp
       configuration:

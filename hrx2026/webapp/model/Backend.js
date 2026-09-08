@@ -154,6 +154,24 @@ sap.ui.define([], function () {
 		},
 
 		/**
+		 * Only approved leave is time off. The timesheet service returns leave requests
+		 * that touch the week along with the outcome of each in StatusID ("APR", "REJ",
+		 * and "REQ" for one still waiting on a manager), and anything short of approved
+		 * leaves the day an ordinary working day: it must not be marked as leave, must
+		 * not stop time being booked against it, and must not reduce the week's target.
+		 *
+		 * An entry carrying no StatusID at all is kept - there is nothing to judge it
+		 * by, so it keeps the behaviour it has always had rather than disappearing.
+		 * @param {Array<object>} aLeaves the leave entries from the service
+		 * @returns {Array<object>} the entries that really are time off
+		 */
+		countedLeaves: function (aLeaves) {
+			return (aLeaves || []).filter(function (oEntry) {
+				return !oEntry.StatusID || oEntry.StatusID === "APR";
+			});
+		},
+
+		/**
 		 * @param {Date} oMonday the first day of the week
 		 * @returns {Array<Date>} the seven days of that week
 		 */

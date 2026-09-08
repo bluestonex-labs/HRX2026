@@ -5,11 +5,12 @@
 	<Dialog
 		id="addTimesheetProjectsDialog"
 		title="{i18n>tsAddProjectsTitle}"
-		contentWidth="38rem"
-		contentHeight="26rem"
+		contentWidth="40rem"
+		contentHeight="28rem"
 		resizable="true"
 		busy="{tsView>/saving}"
-		busyIndicatorDelay="0">
+		busyIndicatorDelay="0"
+		class="hrxPickerDialog">
 		<content>
 			<Table
 				id="addProjectsTable"
@@ -17,14 +18,24 @@
 				mode="MultiSelect"
 				growing="true"
 				growingThreshold="50"
+				sticky="ColumnHeaders"
+				class="hrxPickerTable"
 				noDataText="{i18n>tsNoAvailableProjects}">
 				<columns>
+					<!-- Fixed widths for the two short columns so the three of them line up
+					     down the list instead of shifting with the longest client name. -->
 					<Column><Text text="{i18n>tsColProject}" /></Column>
-					<Column minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>tsColClient}" /></Column>
-					<Column hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>tsColType}" /></Column>
+					<Column width="11rem" minScreenWidth="Tablet" demandPopin="true">
+						<Text text="{i18n>tsColClient}" />
+					</Column>
+					<Column width="7.5rem" hAlign="End" minScreenWidth="Tablet" demandPopin="true">
+						<Text text="{i18n>tsColType}" />
+					</Column>
 				</columns>
 				<items>
-					<ColumnListItem>
+					<!-- Middle, so the two-line project cell and the single-line client and
+					     type cells sit on one centre line. -->
+					<ColumnListItem vAlign="Middle">
 						<cells>
 							<ObjectIdentifier title="{ts>ProjectDesc}" text="{ts>ProjectID}" />
 							<Text text="{ts>ClientDesc}" />
