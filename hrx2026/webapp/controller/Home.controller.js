@@ -14,6 +14,14 @@ sap.ui.define([
 
 	var TIMESHEET_SERVICE = Backend.TIMESHEET;
 
+	// RadialMicroChart only accepts its own colour enum (a raw CSS colour has been
+	// deprecated since 1.135), and its four semantic values are already spoken for:
+	// Good = complete, Critical = action needed, Error = missing, Neutral = on
+	// leave / not due yet. Sequence1 is the one slot carrying no meaning of its
+	// own, so overbooked days claim it and style.css restyles it to the HRX
+	// overbooked violet.
+	var RING_OVERBOOKED = "Sequence1";
+
 	// abbrev matches the day fields exposed by the /Resources OData entity.
 	var DAYS = [
 		{ label: "Mon", schedule: "Monday", abbrev: "Mo" },
@@ -59,9 +67,12 @@ sap.ui.define([
 
 			var oComponent = this.getOwnerComponent();
 
-			Promise.resolve(oComponent._getLoggedinUserEmail()).then(function (sEmail) {
-				return CurrentUser.load(oComponent, sEmail);
-			}).then(function (oProfile) {
+			// Component.init already resolved this, and it is built never to reject.
+			// Asking _getLoggedinUserEmail() again here fetched /user-api/currentUser a
+			// second time, which 404s with no approuter in front of a local run and
+			// rejected the whole chain - taking the week, the day and the approvals
+			// down with it.
+			Promise.resolve(oComponent._pProfile).then(function (oProfile) {
 				this._oProfile = oProfile;
 				this._pWorkScheduleLoaded = this._loadWorkSchedule(oProfile.email);
 
@@ -82,7 +93,10 @@ sap.ui.define([
 					this._updateHealthStrip();
 				}.bind(this));
 			}.bind(this)).catch(function (oError) {
-				console.error("Home _onRouteMatched failed", oError);
+				// Spell the reason out: the rejection is often a plain response object,
+				// which logs as an empty second argument and says nothing.
+				console.error("Home _onRouteMatched failed",
+					(oError && (oError.stack || oError.message)) || oError, oError);
 			});
 		},
 
@@ -377,7 +391,7 @@ sap.ui.define([
 
 				this._oWeekTotals = this._weekTotals(oData);
 				var mLeave = {};
-				(oData.leaves || []).concat(oData.bankHolidays || []).forEach(function (oEntry) {
+				Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
 					mLeave[String(oEntry.Date).slice(0, 10)] = oEntry;
 				});
 
@@ -392,13 +406,57 @@ sap.ui.define([
 					var bWorking = oSchedule[oDay.schedule] !== "N";
 					var iBooked = this._bookedMinutes(oData, sDate);
 
+					// A day off owes no time at all, so anything booked against it is
+					// already more than was asked for - but only once there is a target to
+					// be over. Without one (a resource with no weekly hours on record)
+					// nothing can be judged either way, so no day is called overbooked.
+					var iDayTarget = bWorking ? iTargetPerDay : 0;
+					var bOverbooked = iTargetPerDay > 0 && iBooked > iDayTarget;
+
+					// The ring can never read past a full circle - the control clamps the
+					// figure it prints to 100% and logs an error above that - so
+					// overbooking is carried by the ring's colour and its tooltip rather
+					// than by a percentage the chart would refuse to show.
+					var iPercent = iDayTarget
+						? Math.min(iBooked * 100 / iDayTarget, 100)
+						: (bOverbooked ? 100 : 0);
+
+					// The true figure, uncapped - 20:00 against an 8:00 day reads 250%.
+					// It is rendered as our own label over the ring (see hrxRingPercent in
+					// style.css) because the chart's built-in one cannot print past 100%.
+					// A day with no target has no denominator, so there is no percentage
+					// to state and the tooltip carries the hours instead.
+					var sPercentLabel = iDayTarget
+						? Math.round(iBooked * 100 / iDayTarget) + "%"
+						: (iBooked ? "—" : "0%");
+
 					if (mLeave[sDate]) {
 						return {
 							day: oDay.label,
 							onLeave: true,
 							percent: 100,
 							state: "Neutral",
-							label: this.getText("legendOnLeave")
+							label: this.getText("legendOnLeave"),
+							percentLabel: "",
+							tooltip: this.getText("legendOnLeave")
+						};
+					}
+
+					// Checked ahead of the not-due-yet branch: time booked over target on
+					// a day still to come is just as overbooked as on a day gone by.
+					if (bOverbooked) {
+						return {
+							day: oDay.label,
+							onLeave: false,
+							percent: 100,
+							state: RING_OVERBOOKED,
+							label: Backend.fromMinutes(iBooked),
+							percentLabel: sPercentLabel,
+							tooltip: this.getText("ringTooltipOverbooked", [
+								Backend.fromMinutes(iBooked),
+								Backend.fromMinutes(iDayTarget),
+								Backend.fromMinutes(iBooked - iDayTarget)
+							])
 						};
 					}
 
@@ -406,18 +464,28 @@ sap.ui.define([
 						return {
 							day: oDay.label,
 							onLeave: false,
-							percent: iTargetPerDay ? Math.min(iBooked * 100 / iTargetPerDay, 100) : 0,
+							percent: iPercent,
 							state: "Neutral",
-							label: iBooked ? Backend.fromMinutes(iBooked) : "—"
+							label: iBooked ? Backend.fromMinutes(iBooked) : "—",
+							percentLabel: sPercentLabel,
+							tooltip: bWorking
+								? this.getText("ringTooltipNotDue", [
+									Backend.fromMinutes(iBooked), Backend.fromMinutes(iDayTarget)
+								])
+								: this.getText("qtNonWorkingDay")
 						};
 					}
 
 					return {
 						day: oDay.label,
 						onLeave: false,
-						percent: iTargetPerDay ? Math.min(iBooked * 100 / iTargetPerDay, 100) : 0,
-						state: iBooked >= iTargetPerDay ? "Good" : iBooked > 0 ? "Critical" : "Error",
-						label: Backend.fromMinutes(iBooked)
+						percent: iPercent,
+						state: iBooked >= iDayTarget ? "Good" : iBooked > 0 ? "Critical" : "Error",
+						label: Backend.fromMinutes(iBooked),
+						percentLabel: sPercentLabel,
+						tooltip: this.getText("ringTooltipBooked", [
+							Backend.fromMinutes(iBooked), Backend.fromMinutes(iDayTarget)
+						])
 					};
 				}, this));
 
@@ -447,7 +515,7 @@ sap.ui.define([
 			}, 0);
 
 			var iTarget = Backend.toMinutes(oData.user.targetHrsPerWeek);
-			iTarget -= (oData.leaves || []).reduce(function (iTotal, oEntry) {
+			iTarget -= Backend.countedLeaves(oData.leaves).reduce(function (iTotal, oEntry) {
 				return iTotal + Backend.toMinutes(oEntry.Hours);
 			}, 0);
 			iTarget -= (oData.bankHolidays || []).filter(function (oEntry) {
@@ -550,7 +618,7 @@ sap.ui.define([
 				var aEntries = [];
 				var iBooked = 0;
 
-				var oLeaveEntry = (oData.leaves || []).concat(oData.bankHolidays || []).filter(function (oEntry) {
+				var oLeaveEntry = Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).filter(function (oEntry) {
 					return String(oEntry.Date).slice(0, 10) === sDay;
 				})[0];
 				var oSchedule = this._oWorkSchedule || {};

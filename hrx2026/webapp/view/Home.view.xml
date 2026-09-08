@@ -253,7 +253,10 @@
 					<!-- One column per day, all the same width, and the ring and the leave
 					     marker share a slot of one height so every label lines up. -->
 					<HBox class="hrxRingRow" justifyContent="SpaceBetween" items="{home>/weekRings}">
-						<VBox alignItems="Center" class="hrxRingDay">
+						<!-- The hover text sits on the whole day column: RadialMicroChart
+						     turns its own tooltip into an aria-label only, never a title
+						     attribute, so a tooltip set on the ring would never show. -->
+						<VBox alignItems="Center" class="hrxRingDay" tooltip="{home>tooltip}">
 							<Text text="{home>day}" class="hrxRingDayName" />
 							<VBox alignItems="Center" justifyContent="Center" class="hrxRingSlot">
 								<VBox
@@ -273,6 +276,20 @@
 									visible="{= !${home>onLeave} }"
 									percentage="{home>percent}"
 									valueColor="{home>state}" />
+								<!-- Our own figure over the ring: the chart's built-in label
+								     stops at 100%, so it is hidden in style.css and this one
+								     states the real percentage, however far over it goes. -->
+								<!-- Centred by UI5's own flex classes on this VBox, exactly as
+								     the leave marker above is, rather than by CSS on the Text -
+								     the theme overrides text-align on .sapMText whatever the
+								     specificity. -->
+								<VBox
+									alignItems="Center"
+									justifyContent="Center"
+									class="hrxRingPercentBox"
+									visible="{= !${home>onLeave} }">
+									<Text text="{home>percentLabel}" class="hrxRingPercent" />
+								</VBox>
 							</VBox>
 							<Text text="{home>label}" class="hrxRingLabel" />
 						</VBox>
@@ -290,6 +307,10 @@
 						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
 							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotMint" />
 							<Text text="{i18n>legendComplete}" />
+						</HBox>
+						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
+							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotOver" />
+							<Text text="{i18n>legendOverbooked}" />
 						</HBox>
 						<HBox alignItems="Center" class="sapUiSmallMarginEnd">
 							<core:Icon src="sap-icon://circle-task-2" class="hrxDot hrxDotIce" />

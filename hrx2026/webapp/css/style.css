@@ -23,6 +23,7 @@
 	--mint-soft: #E4F6EE;
 	--amber: #D97706;
 	--amber-soft: #FEF3C7;
+	--over: #7C5CD6;
 	--line: #E3E6EA;
 	--line-soft: #EEF1F4;
 	--txt: #33343A;
@@ -1104,6 +1105,41 @@ body.sapUiBody {
 	width: 68px;
 	height: 68px;
 	margin: 8px 0 6px;
+	position: relative;
+}
+
+/* The chart's own figure is capped at 100% by the control, so it is hidden and
+   replaced by hrxRingPercent below, which states the real one. Both sit
+   absolutely centred over the ring, so neither disturbs the column. */
+.sapUiBody .hrxRingSlot .sapSuiteRMCInsideLabel {
+	display: none;
+}
+
+/* The figure over the ring, laid over the whole slot so it lands dead centre of
+   the ring and adds no height of its own. The VBox carries the position; the
+   Text only needs its own type and colour (the theme sets both directly on
+   .sapMText, so a rule on an ancestor never reaches it) and overflow put back
+   to visible, since sap.m.Text's own clipping is what hid the figure. */
+.sapUiBody .hrxRingSlot .hrxRingPercentBox {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.sapUiBody .sapMText.hrxRingPercent {
+	overflow: visible;
+	text-overflow: clip;
+	white-space: nowrap;
+	max-width: none;
+	font-family: var(--sans);
+	font-size: 12.5px;
+	font-weight: 700;
+	line-height: 1;
+	color: var(--txt);
 }
 
 /* Whatever the chart's own idea of its size, it stays inside the day column */
@@ -1114,11 +1150,24 @@ body.sapUiBody {
 	min-width: 0;
 }
 
+/* An overbooked day. RadialMicroChart takes only its own colour enum, so
+   Home.controller asks for Sequence1 - the one value with no meaning of its own
+   in this app - and it is repainted here as the overbooked violet. The ring is
+   drawn as one full circle at 100% and as stroked paths below it, and both
+   carry this class. Three classes deep, so no !important is needed to beat the
+   theme's own single-class rule. */
+.sapUiBody .hrxRingSlot .sapSuiteRMCPathSequence1 {
+	stroke: var(--over);
+}
+
+.sapUiBody .sapMText.hrxRingLabel,
 .sapUiBody .hrxRingLabel {
 	font-family: monospace;
 	font-size: 11.5px;
 	font-weight: 700;
 	color: var(--txt-2);
+	line-height: 16px;
+	white-space: nowrap;
 }
 
 /* A day taken as leave: filled rather than a ring, as in the prototype */
@@ -1148,6 +1197,7 @@ body.sapUiBody {
 .sapUiBody .hrxDotSignal { color: var(--signal); }
 .sapUiBody .hrxDotAmber { color: var(--amber); }
 .sapUiBody .hrxDotMint { color: var(--mint); }
+.sapUiBody .hrxDotOver { color: var(--over); }
 .sapUiBody .hrxDotIce { color: var(--ice); }
 .sapUiBody .hrxDotLine { color: var(--frost-2); }
 
@@ -1288,3 +1338,75 @@ body.sapUiBody {
 	padding: 0;
 }
 
+/* Rows that may not be deleted (BlueStoneX's own projects, and the read-only
+   leave and holiday rows) keep their column for alignment but show no checkbox.
+   The controller refuses the selection as well - "select all" never touches the
+   DOM - so this is the visual half of that rule, not the rule itself. */
+.sapUiBody .sapMListTbl tr[data-deletable="false"] > .sapMListTblSelCol > * {
+	visibility: hidden;
+}
+
+/* ============================================================================
+   Picker dialogs (Add project(s) and friends)
+
+   The table runs edge to edge inside the dialog by default, which puts the
+   checkbox hard against the frame and the first row hard under the title. These
+   rules give the list its own breathing room and put the row rhythm and type on
+   the same footing as the rest of the app.
+   ============================================================================ */
+
+/* The dialog's own scroll container carries the side gutters, so the sticky
+   column header lines up with the rows beneath it. */
+.sapUiBody .hrxPickerDialog .sapMDialogScrollCont {
+	padding: 0 12px 4px;
+	box-sizing: border-box;
+}
+
+/* Header row: same quiet, uppercase label as the timesheet grid's own header.
+   The header cell is .sapMTableTH - there is no .sapMListTblHeader* class. */
+.sapUiBody .hrxPickerTable .sapMTableTH {
+	background: var(--frost);
+}
+
+.sapUiBody .hrxPickerTable .sapMTableTH .sapMText,
+.sapUiBody .hrxPickerTable .sapMTableTH .sapMLabel,
+.sapUiBody .hrxPickerTable .sapMTableTH .sapMColumnHeader {
+	font-family: var(--sans);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	color: var(--txt-2);
+}
+
+/* Even vertical rhythm - the default cell padding leaves the two-line project
+   cell noticeably taller than its neighbours. */
+/* !important on these two: the theme's own cell padding is set through a more
+   specific element-and-child selector, so a class-only rule silently loses. */
+.sapUiBody .hrxPickerTable .sapMListTblCell {
+	padding-top: 8px !important;
+	padding-bottom: 8px !important;
+}
+
+.sapUiBody .hrxPickerTable .sapMListTblRow > .sapMListTblSelCol {
+	padding-left: 4px !important;
+}
+
+.sapUiBody .hrxPickerTable .sapMLIB {
+	border-bottom-color: var(--line-soft);
+}
+
+/* The project id under the name is a plain reference, not a link. */
+.sapUiBody .hrxPickerTable .sapMObjectIdentifierText {
+	font-family: monospace;
+	font-size: 11.5px;
+	color: var(--txt-3);
+}
+
+.sapUiBody .hrxPickerTable .sapMObjectIdentifierTitle,
+.sapUiBody .hrxPickerTable .sapMObjectIdentifierTitle .sapMText {
+	font-family: var(--sans);
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--txt);
+}

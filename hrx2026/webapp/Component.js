@@ -69,17 +69,27 @@ sap.ui.define([
             // matches, so the call 404s and every session falls back to no identity.
             var id = this.getManifestEntry("/sap.app/id");
             var callUrl = jQuery.sap.getModulePath(id + '/user-api/currentUser');
-            return $.ajax({
-                url:callUrl,
-                type: "GET",
-                contentType: "application/json",
-                dataType: "json",
-                cache: false
-            }).then(function (oData) {
-                return oData.email;
-            }, function (jqXHR) {
-                console.log(jqXHR.responseText);
-                return "";
+
+            // A native promise, not $.ajax's own: a jQuery promise propagates the value
+            // its fail handler returns as a *rejection* rather than a resolution, so the
+            // "" fallback below used to come back rejected. That rejection survived the
+            // .catch in init() (jQuery semantics again) and left _pProfile rejected -
+            // which is what surfaced as "Home _onRouteMatched failed" with no reason
+            // attached whenever /user-api/currentUser 404s, i.e. on every local run,
+            // where there is no approuter in front of the app to answer it.
+            return new Promise(function (resolve) {
+                $.ajax({
+                    url: callUrl,
+                    type: "GET",
+                    contentType: "application/json",
+                    dataType: "json",
+                    cache: false
+                }).done(function (oData) {
+                    resolve((oData && oData.email) || "");
+                }).fail(function (jqXHR) {
+                    console.log(jqXHR.responseText);
+                    resolve("");
+                });
             });
         }
     });
