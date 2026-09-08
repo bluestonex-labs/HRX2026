@@ -70,11 +70,23 @@ sap.ui.define([
 		/**
 		 * The view is reused across navigations, so every entry reloads the balance and
 		 * clears any half-finished request.
+		 *
+		 * Landing here straight from a browser refresh re-runs onInit, whose
+		 * CurrentUser.email() read can beat Component.js's _pProfile lookup to the
+		 * punch and resolve to "" - fetchUser then comes back for no one in
+		 * particular, leaving fields like the approver name blank. Waiting on
+		 * _pProfile here (as Home.controller does) picks up the real email once it
+		 * has actually loaded.
 		 */
 		_onRouteMatched: function () {
 			this.getModel("mlView").setProperty("/statusFilter", "All");
 			this._resetRequestForm();
-			this._pLookupsLoaded.then(this._loadUser.bind(this));
+
+			Promise.resolve(this.getOwnerComponent()._pProfile).then(function (oProfile) {
+				this._sUserEmail = (oProfile && oProfile.email) || this._sUserEmail;
+				this.getModel("mlView").setProperty("/currentEmail", this._sUserEmail);
+				return this._pLookupsLoaded.then(this._loadUser.bind(this));
+			}.bind(this));
 		},
 
 		/* =========================================================== */
@@ -204,6 +216,9 @@ sap.ui.define([
 			};
 
 			(this.getModel("ml").getProperty("/availedLeaves") || []).forEach(function (oLeave) {
+				if (oLeave.Status === "Rejected") {
+					return;
+				}
 				fnMark(oLeave.Date, oLeave.LeaveTypeID, oLeave.LeaveType + " (" + oLeave.Absence + ") — " + oLeave.Status);
 			});
 			(this.getModel("ml").getProperty("/bankHolidays") || []).forEach(function (oHoliday) {

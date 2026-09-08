@@ -1078,6 +1078,46 @@ body.sapUiBody {
 	padding: 16px 18px 18px;
 }
 
+/* Quick Leave and Quick Timesheet sit side by side in an equal-height row
+   (.hrxHomeCard), but have a different number of fields above their submit
+   button - without this the buttons land at whatever height their own
+   content happens to reach, out of line with each other. sap.f.Card's own
+   content wrapper (.sapFCardContent) is only flex:1 in the *row* direction it
+   renders in by default, which grows the wrapper but does not itself turn
+   into a column or force a percentage-height child to fill it, so both this
+   wrapper and our own card body are pinned to a definite, full-height column
+   explicitly rather than relying on that default stretch. Pushing the
+   trailing button down with margin-top:auto then keeps both buttons flush
+   along the same bottom edge. */
+.sapUiBody .hrxHomeCard.sapFCard > .sapFCardContent {
+	display: flex !important;
+	flex-direction: column !important;
+	height: 100%;
+}
+
+.sapUiBody .hrxQuickCardBody {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	height: 100%;
+	min-height: 0;
+	box-sizing: border-box;
+}
+
+/* Quick Timesheet swaps its whole body between an entry form and an
+   already-logged summary - whichever is showing must itself grow to fill the
+   card so its own trailing button is the one that lands at the bottom. */
+.sapUiBody .hrxCardBodyFill {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.sapUiBody .hrxCardFooterButton {
+	margin-top: auto;
+}
+
 .sapUiBody .hrxLoggedIcon {
 	color: var(--mint);
 	font-size: 26px;

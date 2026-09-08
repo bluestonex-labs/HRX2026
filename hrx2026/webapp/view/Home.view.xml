@@ -71,7 +71,7 @@
 					<card:Header title="{i18n>quickLeaveTitle}" />
 				</f:header>
 				<f:content>
-					<VBox class="hrxCardBody" width="100%" busy="{home>/savingLeave}" busyIndicatorDelay="0">
+					<VBox class="hrxCardBody hrxQuickCardBody" width="100%" busy="{home>/savingLeave}" busyIndicatorDelay="0">
 						<Label text="{i18n>fieldDates}" required="true" />
 						<DateRangeSelection
 							id="qlDateRange"
@@ -130,7 +130,8 @@
 							type="Emphasized"
 							width="100%"
 							enabled="{= ${home>/quickLeave/NoOfDays} > 0 }"
-							press=".onRequestLeave" />
+							press=".onRequestLeave"
+							class="hrxCardFooterButton" />
 					</VBox>
 				</f:content>
 			</f:Card>
@@ -143,7 +144,7 @@
 						subtitle="{home>/quick/dayLabel}" />
 				</f:header>
 				<f:content>
-					<VBox class="hrxCardBody" width="100%" busy="{home>/loadingDay}" busyIndicatorDelay="0">
+					<VBox class="hrxCardBody hrxQuickCardBody" width="100%" busy="{home>/loadingDay}" busyIndicatorDelay="0">
 
 						<Label text="{i18n>fieldDay}" required="true" />
 						<DatePicker
@@ -156,7 +157,7 @@
 							class="sapUiTinyMarginBottom" />
 
 						<!-- Nothing booked yet for the chosen day: the entry form -->
-						<VBox visible="{= !${home>/quick/logged} }">
+						<VBox visible="{= !${home>/quick/logged} }" class="hrxCardBodyFill">
 							<MessageStrip
 								text="{home>/quick/dayEditableReason}"
 								type="Information"
@@ -202,11 +203,12 @@
 								type="Emphasized"
 								width="100%"
 								enabled="{home>/quick/dayEditable}"
-								press=".onSaveQuickTimesheet" />
+								press=".onSaveQuickTimesheet"
+								class="hrxCardFooterButton" />
 						</VBox>
 
 						<!-- Already booked: what the day holds, straight from the service -->
-						<VBox visible="{home>/quick/logged}">
+						<VBox visible="{home>/quick/logged}" class="hrxCardBodyFill">
 							<VBox alignItems="Center" class="sapUiSmallMarginTop">
 								<core:Icon src="sap-icon://message-success" class="hrxLoggedIcon" />
 								<Text
@@ -234,7 +236,7 @@
 								type="Transparent"
 								width="100%"
 								press=".onLogMoreTime"
-								class="sapUiTinyMarginTop" />
+								class="sapUiTinyMarginTop hrxCardFooterButton" />
 						</VBox>
 					</VBox>
 				</f:content>
