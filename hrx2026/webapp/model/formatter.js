@@ -205,16 +205,20 @@ sap.ui.define([
 		 * @param {string} sLeaveType the leave type description
 		 * @returns {string} a CSS colour
 		 */
+		// Kept in step with the --sapLegendColor1-5 overrides in css/style.css, which
+		// recolour the leave calendar's day markers and legend to the same palette.
 		leaveTypeColor: function (sLeaveType) {
 			switch ((sLeaveType || "").toLowerCase()) {
 				case "holiday":
-					return "#26AAE2";
+					return "#96C2FA";
 				case "sick":
-					return "#C296C8";
+					return "#BB98C5";
 				case "unpaid":
-					return "#FC7753";
+					return "#EB7F5D";
 				case "compassionate":
-					return "#FFC914";
+					return "#F7CB48";
+				case "bank holiday":
+					return "#ABC3D2";
 				default:
 					return "#8C8C8C";
 			}
