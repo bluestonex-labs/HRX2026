@@ -26,11 +26,20 @@
 			     a second tool header. -->
 			<VBox fitContainer="true" class="hrxMainStack">
 				<VBox class="hrxCrumbBar">
-					<HBox alignItems="Center" justifyContent="SpaceBetween">
+					<HBox alignItems="End" wrap="Wrap">
 						<VBox justifyContent="Center">
 							<Text text="{i18n>appEyebrow}" class="hrxEyebrow"/>
 							<Title text="{app>/page/title}" level="H1" class="hrxPageTitle"/>
 						</VBox>
+
+						<!-- The strip summarises the signed-in user's own week, so it belongs to
+						     the home page rather than to every screen. Bottom-aligned against the
+						     title/eyebrow stack so it lines up with the title text itself, not the
+						     midpoint of the whole stack. -->
+						<HBox wrap="Wrap" class="hrxHealthStrip" visible="{app>/page/showStrip}" items="{app>/healthStrip}">
+							<ObjectStatus text="{app>text}" state="{app>state}" class="hrxPill sapUiTinyMarginEnd"/>
+						</HBox>
+
 						<!--<Avatar
 							id="profileAvatar"
 							initials="{app>/user/initials}"
@@ -39,12 +48,6 @@
 							tooltip="{app>/user/name}"
 							press="onProfilePress"
 							class="hrxProfileAvatar" />-->
-					</HBox>
-
-					<!-- The strip summarises the signed-in user's own week, so it belongs to
-					     the home page rather than to every screen. -->
-					<HBox wrap="Wrap" class="hrxHealthStrip" visible="{app>/page/showStrip}" items="{app>/healthStrip}">
-						<ObjectStatus text="{app>text}" state="{app>state}" class="hrxPill sapUiTinyMarginEnd"/>
 					</HBox>
 				</VBox>
 				<NavContainer id="appNavContainer" height="100%">
