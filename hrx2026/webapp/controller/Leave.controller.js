@@ -37,12 +37,17 @@ sap.ui.define([
 		/* =========================================================== */
 
 		onInit: function () {
-			this._sOrgId = this._resolveOrgId();
+			// No lookup here: the signed-in user is still being resolved, and reading
+			// the email now hands back "" on a browser refresh - which the services read
+			// as "match anybody", so the page filled in with somebody else's details.
+			// Everything waits on the profile in _onRouteMatched instead.
+			this._sOrgId = CurrentUser.orgId(this.getOwnerComponent());
+			this._sUserEmail = "";
 
 			this.setModel(new JSONModel({
 				busy: true,
 				saving: false,
-				currentEmail: this._sUserEmail,
+				currentEmail: "",
 				statusFilter: "All",
 				kpis: this._emptyKpis(),
 				user: {}
@@ -61,8 +66,6 @@ sap.ui.define([
 			this.setModel(new JSONModel(this._emptyRequest()), "mlForm");
 			this.setModel(new JSONModel({}), "mlEdit");
 
-			this._pLookupsLoaded = this._loadLookups();
-
 			this.getOwnerComponent().getRouter().getRoute("leave")
 				.attachPatternMatched(this._onRouteMatched, this);
 		},
@@ -71,20 +74,29 @@ sap.ui.define([
 		 * The view is reused across navigations, so every entry reloads the balance and
 		 * clears any half-finished request.
 		 *
-		 * Landing here straight from a browser refresh re-runs onInit, whose
-		 * CurrentUser.email() read can beat Component.js's _pProfile lookup to the
-		 * punch and resolve to "" - fetchUser then comes back for no one in
-		 * particular, leaving fields like the approver name blank. Waiting on
-		 * _pProfile here (as Home.controller does) picks up the real email once it
-		 * has actually loaded.
+		 * Landing here straight from a browser refresh runs onInit while the profile
+		 * lookup Component.js started is still in flight, so nothing may be fetched
+		 * until it has landed - fetchUser with no email comes back for no one in
+		 * particular, which is what put another person's quota and approver on screen.
 		 */
 		_onRouteMatched: function () {
 			this.getModel("mlView").setProperty("/statusFilter", "All");
 			this._resetRequestForm();
 
-			Promise.resolve(this.getOwnerComponent()._pProfile).then(function (oProfile) {
-				this._sUserEmail = (oProfile && oProfile.email) || this._sUserEmail;
+			return CurrentUser.ready(this.getOwnerComponent()).then(function (oProfile) {
+				this._sUserEmail = oProfile.email;
+				this._sOrgId = oProfile.orgId;
 				this.getModel("mlView").setProperty("/currentEmail", this._sUserEmail);
+
+				if (!this._sUserEmail) {
+					this.getModel("mlView").setProperty("/busy", false);
+					this._showError("mlErrorNoIdentity", null);
+					return undefined;
+				}
+
+				// The directory is filtered against the signed-in user, so it can only be
+				// read once that user is known.
+				this._pLookupsLoaded = this._pLookupsLoaded || this._loadLookups();
 				return this._pLookupsLoaded.then(this._loadUser.bind(this));
 			}.bind(this));
 		},
@@ -587,11 +599,6 @@ sap.ui.define([
 
 		_emptyKpis: function () {
 			return { quota: "0", used: "0", balance: "0", balanceState: "Neutral" };
-		},
-
-		_resolveOrgId: function () {
-			this._sUserEmail = CurrentUser.email(this.getOwnerComponent());
-			return CurrentUser.orgId(this.getOwnerComponent());
 		},
 
 		_errorText: function (oError) {

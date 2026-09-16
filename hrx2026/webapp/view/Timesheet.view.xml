@@ -11,32 +11,29 @@
 
 		<content>
 
-			<!-- Managers can look at somebody else's week; everybody can reload their own -->
-			<HBox alignItems="Center" justifyContent="End" class="hrxToolRow">
-				<HBox alignItems="Center" visible="{tsView>/isManager}">
-					<Label
-						text="{i18n>tsViewingAs}"
-						labelFor="timesheetViewAs"
-						class="sapUiTinyMarginEnd" />
-					<ComboBox
-						id="timesheetViewAs"
-						selectedKey="{tsView>/currentEmail}"
-						items="{ts>/directory}"
-						showSecondaryValues="true"
-						width="15rem"
-						change=".onViewAsChange"
-						selectionChange=".onViewAsChange"
-						placeholder="{i18n>tsViewingAsPlaceholder}">
-						<core:ListItem key="{ts>Email}" text="{ts>FullName}" additionalText="{ts>EmpID}" />
-					</ComboBox>
-				</HBox>
-				<Button
-					id="timesheetRefresh"
-					icon="sap-icon://refresh"
-					type="Transparent"
-					tooltip="{i18n>tsRefreshTooltip}"
-					press=".onRefresh"
-					class="sapUiTinyMarginBegin" />
+			<!-- Managers can look at somebody else's week. Reloading is on the shell bar
+			     with the page title, so this row disappears entirely for everybody else
+			     rather than holding a lone refresh icon. -->
+			<HBox
+				alignItems="Center"
+				justifyContent="End"
+				visible="{tsView>/isManager}"
+				class="hrxToolRow">
+				<Label
+					text="{i18n>tsViewingAs}"
+					labelFor="timesheetViewAs"
+					class="sapUiTinyMarginEnd" />
+				<ComboBox
+					id="timesheetViewAs"
+					selectedKey="{tsView>/currentEmail}"
+					items="{ts>/directory}"
+					showSecondaryValues="true"
+					width="15rem"
+					change=".onViewAsChange"
+					selectionChange=".onViewAsChange"
+					placeholder="{i18n>tsViewingAsPlaceholder}">
+					<core:ListItem key="{ts>Email}" text="{ts>FullName}" additionalText="{ts>EmpID}" />
+				</ComboBox>
 			</HBox>
 
 			<!-- The month's billing figures. A responsive grid gives each tile its own

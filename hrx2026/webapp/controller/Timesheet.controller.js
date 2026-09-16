@@ -37,6 +37,15 @@ sap.ui.define([
 	// A closed month can still be corrected during the first few working days of the next one.
 	var GRACE_WORKING_DAYS = 3;
 
+	// The "viewing as" picker normally offers a manager their own direct reports.
+	// These three run resourcing and payroll, so they need every timesheet in the
+	// organisation regardless of who reports to whom.
+	var TIMESHEET_ALL_ACCESS = [
+		"tina.porter@bluestonex.com",
+		"tia.menhennet@bluestonex.com",
+		"vicky.williams@bluestonex.com"
+	];
+
 	return Controller.extend("bsx.hrx.hrx2026.controller.Timesheet", {
 
 		formatter: formatter,
@@ -46,7 +55,14 @@ sap.ui.define([
 		/* =========================================================== */
 
 		onInit: function () {
-			this._sOrgId = this._resolveOrgId();
+			// The signed-in user is still being resolved at this point: reading the
+			// email here (as this did) hands back "" on a browser refresh, and the
+			// services read an empty Email as "match anybody" rather than "nobody" -
+			// which is why refreshing inside the timesheet emptied the project list and
+			// left only the bank holiday row. Every lookup now waits for the profile in
+			// _onRouteMatched.
+			this._sOrgId = CurrentUser.orgId(this.getOwnerComponent());
+			this._sUserEmail = "";
 
 			this.setModel(new JSONModel({
 				busy: true,
@@ -54,8 +70,7 @@ sap.ui.define([
 				weekStart: this._mondayOf(new Date()),
 				weekLabel: "",
 				isManager: false,
-				currentEmail: //"gaurav.kumar@bluestonex.com",
-				this._sUserEmail,
+				currentEmail: "",
 				userId: "",
 				selectedCount: 0,
 				dayHeaders: DAYS.map(function (oDay) {
@@ -77,8 +92,6 @@ sap.ui.define([
 
 			this.setModel(new JSONModel({ comment: "", label: "" }), "tsComment");
 
-			this._pDirectoryLoaded = this._loadDirectory();
-
 			this.getOwnerComponent().getRouter().getRoute("timesheet")
 				.attachPatternMatched(this._onRouteMatched, this);
 		},
@@ -90,15 +103,32 @@ sap.ui.define([
 		_onRouteMatched: function () {
 			this.getModel("tsView").setProperty("/weekStart", this._mondayOf(new Date()));
 
-			// Every entry to the screen starts on whoever is signed in, with their own
-			// name showing in the picker - the view is reused across navigations, so
-			// without this it would come back holding whatever was last looked at.
-			this._sViewAsEmail = this._sUserEmail;
-			this.getModel("tsView").setProperty("/currentEmail", this._sUserEmail);
+			return CurrentUser.ready(this.getOwnerComponent()).then(function (oProfile) {
+				this._sUserEmail = oProfile.email;
+				this._sOrgId = oProfile.orgId;
 
-			this._pDirectoryLoaded.then(function () {
-				this._restoreViewAs();
-				return this._loadWeek();
+				if (!this._sUserEmail) {
+					this.getModel("tsView").setProperty("/busy", false);
+					this._showError("tsErrorNoIdentity", null);
+					return undefined;
+				}
+
+				// Every entry to the screen starts on whoever is signed in, with their
+				// own name showing in the picker - the view is reused across
+				// navigations, so without this it would come back holding whatever was
+				// last looked at.
+				this._sViewAsEmail = this._sUserEmail;
+				this.getModel("tsView").setProperty("/currentEmail", this._sUserEmail);
+
+				// The directory is filtered against the signed-in user, so it can only
+				// be read once that user is known - loading it from onInit filtered
+				// against "" and came back empty on every refresh.
+				this._pDirectoryLoaded = this._pDirectoryLoaded || this._loadDirectory();
+
+				return this._pDirectoryLoaded.then(function () {
+					this._restoreViewAs();
+					return this._loadWeek();
+				}.bind(this));
 			}.bind(this));
 		},
 
@@ -136,10 +166,16 @@ sap.ui.define([
 		 * get to use it, but the list is cheap and stable so it is fetched once.
 		 * Scoped to the signed-in manager's own direct reports (plus themselves) - not
 		 * the whole org - so a manager can only view timesheets they are entitled to see.
+		 * The resourcing/payroll roles in TIMESHEET_ALL_ACCESS are the exception and get
+		 * everybody.
 		 * @returns {Promise} resolved once the directory is in the model
 		 */
 		_loadDirectory: function () {
-			var sManagerId = CurrentUser.get() && CurrentUser.get().empID;
+			var oProfile = CurrentUser.get() || {};
+			var sManagerId = oProfile.empID;
+			// Somebody entitled to look at everybody's timesheet, not only at the people
+			// who report to them - see TIMESHEET_ALL_ACCESS.
+			var bSeesEveryone = this._seesEveryone();
 
 			return this._read("/Resources", {
 				urlParameters: { "$select": "EmpID,FName,LName,Email,IsActive,ManagerID" },
@@ -148,7 +184,8 @@ sap.ui.define([
 				this.getModel("ts").setProperty("/directory", this._strip(oData)
 					.filter(function (oResource) {
 						return oResource.IsActive === "Y" && oResource.Email &&
-							(oResource.Email === this._sUserEmail || oResource.ManagerID === sManagerId);
+							(bSeesEveryone || oResource.Email === this._sUserEmail ||
+								oResource.ManagerID === sManagerId);
 					}.bind(this))
 					.map(function (oResource) {
 						oResource.FullName = ((oResource.FName || "") + " " + (oResource.LName || "")).trim();
@@ -157,9 +194,23 @@ sap.ui.define([
 					.sort(function (a, b) {
 						return a.FullName.localeCompare(b.FullName);
 					}));
+
+				// The picker is only rendered for a manager. These three are not
+				// necessarily managers but still need it, so it is switched on for them
+				// here rather than waiting on the flag the timesheet service returns.
+				if (bSeesEveryone) {
+					this.getModel("tsView").setProperty("/isManager", true);
+				}
 			}.bind(this)).catch(function (oError) {
 				this._showError("tsErrorDirectory", oError);
 			}.bind(this));
+		},
+
+		/**
+		 * @returns {boolean} true when the signed-in user may open anybody's timesheet
+		 */
+		_seesEveryone: function () {
+			return TIMESHEET_ALL_ACCESS.indexOf((this._sUserEmail || "").toLowerCase()) !== -1;
 		},
 
 		/**
@@ -198,7 +249,7 @@ sap.ui.define([
 				// viewed - otherwise opening a colleague's week would hide the picker that
 				// gets you back.
 				if (oViewModel.getProperty("/currentEmail") === this._sUserEmail) {
-					oViewModel.setProperty("/isManager", oUser.isManager === "Y");
+					oViewModel.setProperty("/isManager", oUser.isManager === "Y" || this._seesEveryone());
 				}
 				this._oWorkSchedule = aResults[1];
 				this._oNonWorkingDates = this._nonWorkingDates(oData);
@@ -427,7 +478,7 @@ sap.ui.define([
 			var mDates = {};
 
 			Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
-				mDates[String(oEntry.Date).slice(0, 10)] = true;
+				mDates[Backend.dayKey(oEntry.Date)] = true;
 			});
 
 			return mDates;
@@ -1204,7 +1255,7 @@ sap.ui.define([
 
 		_dayIndexOf: function (sDate, aDates) {
 			for (var iIndex = 0; iIndex < aDates.length; iIndex++) {
-				if (this._isoDate(aDates[iIndex]) === String(sDate).slice(0, 10)) {
+				if (this._isoDate(aDates[iIndex]) === Backend.dayKey(sDate)) {
 					return iIndex;
 				}
 			}
@@ -1259,11 +1310,6 @@ sap.ui.define([
 
 		_emptyKpis: function () {
 			return { targetDays: 0, actualDays: 0, actualState: "Neutral", utilisation: 0, month: "" };
-		},
-
-		_resolveOrgId: function () {
-			this._sUserEmail = CurrentUser.email(this.getOwnerComponent());
-			return CurrentUser.orgId(this.getOwnerComponent());
 		},
 
 		_errorText: function (oError) {

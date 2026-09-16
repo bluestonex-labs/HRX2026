@@ -21,6 +21,19 @@ sap.ui.define([
 		return (oParameters[sName] && oParameters[sName].length && oParameters[sName][0]) || "";
 	}
 
+	/**
+	 * Only a machine running the app off the development server has no identity to
+	 * resolve. Anywhere else - a launchpad site, an approuter, a preview in BAS - an
+	 * email that could not be read means something is wrong with the session, and
+	 * standing in a colleague's shoes is far worse than showing nothing: that is what
+	 * put somebody else's leave balance and timesheet on screen after a refresh.
+	 * @returns {boolean} true when the app is being served locally
+	 */
+	function isLocalRun() {
+		var sHost = (window.location && window.location.hostname) || "";
+		return sHost === "localhost" || sHost === "127.0.0.1" || sHost === "[::1]" || sHost === "";
+	}
+
 	return {
 
 		/**
@@ -72,12 +85,14 @@ sap.ui.define([
 			var sOrgId = this.orgId(oComponent);
 			var sToday = Backend.isoDate(new Date());
 
-			// Launchpad dev preview has no approuter in front of it, so there is no
-			// startup parameter and no authenticated session to resolve an email from -
-			// fall back to the same dev identity already hardcoded elsewhere for local
-			// testing. A real deployment always resolves a real email here, so this
-			// branch never fires there.
-			var sResolvedEmail = sParamEmail || sEmail || "gaurav.kumar@bluestonex.com";
+			// A local run has no approuter and no launchpad in front of it, so there is
+			// no startup parameter and no authenticated session to resolve an email
+			// from - it falls back to a dev identity so the app is usable on a laptop.
+			// A deployment must never do that: an unresolved email there means the
+			// session is broken, and loading somebody else's data instead is the bug
+			// that surfaced as "refreshing My Leave shows another person's details".
+			var sResolvedEmail = sParamEmail || sEmail ||
+				(isLocalRun() ? "gaurav.kumar@bluestonex.com" : "");
 
 			pProfile = Promise.resolve(sResolvedEmail).then(function (sResolvedEmail) {
 				if (!sResolvedEmail) {
@@ -148,6 +163,27 @@ sap.ui.define([
 			});
 
 			return pProfile;
+		},
+
+		/**
+		 * The one place a controller should wait on before it fetches anything for the
+		 * signed-in user. Component.init() seeds the lookup before routing starts, so
+		 * this is that same shared promise rather than a second resolution - and it
+		 * never rejects.
+		 *
+		 * Reading the email synchronously in onInit (as every page used to) is what
+		 * broke a browser refresh: onInit runs while the lookup is still in flight, so
+		 * the email came back "", which the services read as "match anybody" - the
+		 * timesheet lost its projects and kept only the bank holiday row, and My Leave
+		 * filled in with whoever the service answered with.
+		 * @param {sap.ui.core.UIComponent} oComponent the app component
+		 * @returns {Promise<object>} the signed-in user's profile
+		 */
+		ready: function (oComponent) {
+			if (oComponent && oComponent._pProfile) {
+				return Promise.resolve(oComponent._pProfile);
+			}
+			return this.load(oComponent);
 		},
 
 		/**

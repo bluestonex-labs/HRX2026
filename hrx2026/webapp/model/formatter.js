@@ -248,18 +248,6 @@ sap.ui.define([
 		},
 
 		/**
-		 * Subtitle for a calendar row.
-		 * @param {number} iDays number of leave entries in the shown period
-		 * @returns {string} a readable summary
-		 */
-		leaveDaysText: function (iDays) {
-			if (!iDays) {
-				return "No leave booked";
-			}
-			return iDays === 1 ? "1 day away" : iDays + " days away";
-		},
-
-		/**
 		 * @param {Array} aItems any array from the model
 		 * @returns {number} the number of entries
 		 */

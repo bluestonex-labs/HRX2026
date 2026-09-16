@@ -26,7 +26,7 @@
 			     a second tool header. -->
 			<VBox fitContainer="true" class="hrxMainStack">
 				<VBox class="hrxCrumbBar">
-					<HBox alignItems="End" wrap="Wrap">
+					<HBox alignItems="End" wrap="Wrap" width="100%">
 						<VBox justifyContent="Center">
 							<Text text="{i18n>appEyebrow}" class="hrxEyebrow"/>
 							<Title text="{app>/page/title}" level="H1" class="hrxPageTitle"/>
@@ -40,14 +40,20 @@
 							<ObjectStatus text="{app>text}" state="{app>state}" class="hrxPill sapUiTinyMarginEnd"/>
 						</HBox>
 
-						<!--<Avatar
-							id="profileAvatar"
-							initials="{app>/user/initials}"
-							displaySize="S"
-							backgroundColor="Accent6"
-							tooltip="{app>/user/name}"
-							press="onProfilePress"
-							class="hrxProfileAvatar" />-->
+						<ToolbarSpacer/>
+
+						<!-- Reload sits on the one bar the app already has rather than in a
+						     toolbar of its own on every page: between the launchpad's shell
+						     bar and this one, a strip carrying nothing but a refresh icon was
+						     costing a row of screen height on every screen. -->
+						<Button
+							id="pageRefresh"
+							icon="sap-icon://refresh"
+							type="Transparent"
+							tooltip="{i18n>appRefreshTooltip}"
+							visible="{app>/page/showRefresh}"
+							press="onRefreshPage"
+							class="hrxCrumbAction"/>
 					</HBox>
 				</VBox>
 				<NavContainer id="appNavContainer" height="100%">

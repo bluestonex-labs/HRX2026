@@ -12,8 +12,6 @@ sap.ui.define([
 	Backend, formatter, CurrentUser) {
 	"use strict";
 
-	var TIMESHEET_SERVICE = Backend.TIMESHEET;
-
 	// RadialMicroChart only accepts its own colour enum (a raw CSS colour has been
 	// deprecated since 1.135), and its four semantic values are already spoken for:
 	// Good = complete, Critical = action needed, Error = missing, Neutral = on
@@ -42,13 +40,18 @@ sap.ui.define([
 		/* =========================================================== */
 
 		onInit: function () {
-			this._sOrgId = this._resolveOrgId();
+			// Deliberately no service call here: the signed-in user is still being
+			// resolved at this point, and asking a service for an empty Email does not
+			// mean "nobody", it means "match anybody". Everything waits on the profile
+			// in _onRouteMatched instead.
+			this._sOrgId = CurrentUser.orgId(this.getOwnerComponent());
+			this._sUserEmail = "";
 			this.getView().setModel(new JSONModel(this._emptyState()), "home");
 
 			this.getOwnerComponent().getRouter().getRoute("home")
 				.attachPatternMatched(this._onRouteMatched, this);
 		},
-		
+
 
 		/**
 		 * The view is reused across navigations, so every entry comes back to today with
@@ -72,24 +75,34 @@ sap.ui.define([
 			// second time, which 404s with no approuter in front of a local run and
 			// rejected the whole chain - taking the week, the day and the approvals
 			// down with it.
-			Promise.resolve(oComponent._pProfile).then(function (oProfile) {
+			CurrentUser.ready(oComponent).then(function (oProfile) {
 				this._oProfile = oProfile;
+				this._sUserEmail = oProfile.email;
+				this._sOrgId = oProfile.orgId;
 				this._pWorkScheduleLoaded = this._loadWorkSchedule(oProfile.email);
 
-				this._loadLeaveTypes();
-				this._loadLeaveUser();
-				this._loadWeek();
-				this._loadDay();
-				this.onProjectOpen();
-
-				var pApprovals;
-				if (oProfile.isManager) {
-					pApprovals = this._loadApprovals();
-				} else {
-					this.getModel().setProperty("/approvals", []);
-					pApprovals = Promise.resolve();
+				if (!oProfile.email) {
+					// Nobody to load anything for. Say so rather than firing service
+					// calls that would match everybody.
+					oModel.setProperty("/weekRings", []);
+					oModel.setProperty("/approvals", []);
+					this._showError("homeErrorNoIdentity", null);
+					return;
 				}
-				Promise.all([this._loadWeek(), this._loadLeaveUser(), pApprovals]).then(function () {
+
+				this._loadLeaveTypes();
+				this._loadDay();
+
+				// Approvals are loaded for everybody, not only for a profile the team
+				// service happened to flag as a manager: that flag went missing often
+				// enough that the home page showed nothing while the same requests were
+				// sitting in the team calendar. The card shows itself once there is
+				// something in it (see the view), so a non-manager still sees nothing.
+				Promise.all([
+					this._loadWeek(),
+					this._loadLeaveUser(),
+					this._loadApprovals()
+				]).then(function () {
 					this._updateHealthStrip();
 				}.bind(this));
 			}.bind(this)).catch(function (oError) {
@@ -100,104 +113,29 @@ sap.ui.define([
 			});
 		},
 
-		_resolveOrgId: function () {
-			this._sUserEmail = CurrentUser.email(this.getOwnerComponent());
-			return CurrentUser.orgId(this.getOwnerComponent());
+		/**
+		 * Reloads everything on the page. Called by the shell bar's reload button, which
+		 * now serves whichever page is on screen.
+		 * @returns {Promise} resolved once the page has been refilled
+		 */
+		onRefresh: function () {
+			if (!this._sUserEmail) {
+				return Promise.resolve();
+			}
+
+			return Promise.all([
+				this._loadWeek(),
+				this._loadDay(),
+				this._loadLeaveUser(),
+				this._loadApprovals()
+			]).then(function () {
+				this._updateHealthStrip();
+			}.bind(this));
 		},
 
 		_weekDates: function (oMonday) {
 			return DAYS.map(function (oDay, iIndex) {
 				return new Date(oMonday.getFullYear(), oMonday.getMonth(), oMonday.getDate() + iIndex);
-			});
-		},
-
-		_toMinutes: function (sTime) {
-			if (!sTime) {
-				return 0;
-			}
-			var aParts = String(sTime).split(":");
-			return (parseInt(aParts[0], 10) || 0) * 60 + (parseInt(aParts[1], 10) || 0);
-		},
-
-		_fromMinutes: function (iMinutes) {
-			return Math.floor(iMinutes / 60) + ":" + String(iMinutes % 60).padStart(2, "0");
-		},
-
-		_recalculate: function () {
-			var oViewModel = this.getModel("tsView");
-			var aRows = this.getModel("ts").getProperty("/rows") || [];
-			var oMonday = formatter.toDate(oViewModel.getProperty("/weekStart")) || this._mondayOf(new Date());
-			var aDates = this._weekDates(oMonday);
-
-			// Leave and bank holidays already reduce the weekly target, so counting them
-			// as booked time as well would double up.
-			var aBookableRows = aRows.filter(function (oRow) {
-				return !oRow.readOnly;
-			});
-
-			var aHeaders = DAYS.map(function (oDay, iIndex) {
-				var iMinutes = aBookableRows.reduce(function (iTotal, oRow) {
-					return iTotal + this._toMinutes(oRow.days[iIndex].time);
-				}.bind(this), 0);
-
-				return {
-					label: oDay.label,
-					date: aDates[iIndex].getDate() + " " + aDates[iIndex].toLocaleDateString("en-GB", { month: "short" }),
-					total: this._fromMinutes(iMinutes),
-					working: this._isWorkingDay(oDay.schedule)
-				};
-			}, this);
-
-			var iBooked = aHeaders.reduce(function (iTotal, oHeader) {
-				return iTotal + this._toMinutes(oHeader.total);
-			}.bind(this), 0);
-			var iTarget = this._iWeekTargetMinutes || 0;
-
-			oViewModel.setProperty("/dayHeaders", aHeaders);
-			oViewModel.setProperty("/weekBooked", this._fromMinutes(iBooked));
-			oViewModel.setProperty("/weekTarget", this._fromMinutes(iTarget));
-			oViewModel.setProperty("/weekPercent", iTarget ? Math.min(Math.round(iBooked * 100 / iTarget), 100) : 0);
-		},
-
-		_emptyKpis: function () {
-			return { targetDays: 0, actualDays: 0, actualState: "Neutral", utilisation: 0, month: "" };
-		},
-
-		_applyRowsGrouping: function () {
-			var oBinding = this.byId("timesheetTable").getBinding("items");
-			if (oBinding) {
-				oBinding.sort(new Sorter("ClientDesc", false, true, this._compareGroups.bind(this)));
-			}
-		},
-
-		_isoDate: function (vDate) {
-			var oDate = formatter.toDate(vDate);
-			if (!oDate) {
-				return "";
-			}
-			var sMonth = String(oDate.getMonth() + 1).padStart(2, "0");
-			var sDay = String(oDate.getDate()).padStart(2, "0");
-			return oDate.getFullYear() + "-" + sMonth + "-" + sDay;
-		},
-		_getJson: function (sUrl) {
-			return this._request(sUrl, { method: "GET" });
-		},
-		_request: function (sUrl, oInit) {
-			return fetch(sUrl, oInit).then(function (oResponse) {
-				return oResponse.text().then(function (sBody) {
-					var oJson = null;
-					try {
-						oJson = sBody ? JSON.parse(sBody) : null;
-					} catch (oParseError) {
-						oJson = null;
-					}
-
-					if (!oResponse.ok || !oJson || oJson.msgType !== "S") {
-						throw new Error((oJson && (oJson.msg || oJson.message)) || sBody || oResponse.statusText);
-					}
-
-					return oJson;
-				});
 			});
 		},
 
@@ -217,7 +155,7 @@ sap.ui.define([
 
 			return new Promise(function (resolve, reject) {
 				this.getOwnerComponent().getModel().read("/LeaveTypes", {
-					filters: [new Filter("OrgID", FilterOperator.EQ, this._oProfile.orgId)],
+					filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)],
 					success: resolve,
 					error: reject
 				});
@@ -241,61 +179,16 @@ sap.ui.define([
 			return oCopy;
 		},
 
-		onProjectOpen: function () {
-			var oCombo = this.byId("qtProject");
-			var aDates = this._weekDates(Backend.mondayOf(new Date()));
-			var sFromDate = this._isoDate(aDates[0]);
-			var sToDate = this._isoDate(aDates[6]);
-			var sOrgID = this._sOrgId;
-			var smail = CurrentUser.email(this.getOwnerComponent());
-
-			jQuery.ajax({
-				url: TIMESHEET_SERVICE + "?cmd=fetchAssignments" +
-					"&Email=" + encodeURIComponent(smail) +
-					"&FromDate=" + encodeURIComponent(sFromDate) +
-					"&ToDate=" + encodeURIComponent(sToDate) +
-					"&OrgID=" + encodeURIComponent(sOrgID),
-				type: "GET",
-
-				dataType: "json",
-
-				success: function (oData) {
-					console.log("Assignments received:", oData.assignments);
-
-					// Clear existing items
-					oCombo.removeAllItems();
-
-					// Add projects directly to ComboBox
-					(oData.assignments || []).forEach(function (oAssignment) {
-
-						oCombo.addItem(
-							new sap.ui.core.Item({
-								key: oAssignment.ProjectID,
-								text: oAssignment.ProjectID + " - " + oAssignment.ProjectDesc
-							})
-						);
-
-					});
-
-					console.log("ComboBox items:", oCombo.getItems());
-				},
-
-				error: function (oError) {
-					console.error("Error fetching assignments:", oError);
-				}
-			});
-		},
 		/**
 		 * The leave block carries the approver and the remaining balance the Quick Leave
 		 * card needs.
 		 * @returns {Promise} resolved once the block is in the model
 		 */
 		_loadLeaveUser: function () {
-			var smail = CurrentUser.email(this.getOwnerComponent());
 			return Backend.getJson(Backend.query(Backend.LEAVE, {
 				cmd: "fetchUser",
-				Email: smail,
-				OrgID: this._oProfile.orgId
+				Email: this._sUserEmail,
+				OrgID: this._sOrgId
 			})).then(function (oData) {
 				var oUser = oData.user || {};
 				// The picture arrives as a large data url and nothing here shows it.
@@ -326,7 +219,7 @@ sap.ui.define([
 				this.getOwnerComponent().getModel().read("/Resources", {
 					urlParameters: { "$select": "Email," + DAYS.map(function (oDay) { return oDay.abbrev; }).join(",") },
 					filters: [
-						new Filter("OrgID", FilterOperator.EQ, this._oProfile.orgId),
+						new Filter("OrgID", FilterOperator.EQ, this._sOrgId),
 						new Filter("Email", FilterOperator.EQ, sEmail)
 					],
 					success: resolve,
@@ -352,19 +245,14 @@ sap.ui.define([
 		 * @returns {Promise<object>} the service response
 		 */
 		_fetchWeek: function (oMonday) {
-			var smail = CurrentUser.email(this.getOwnerComponent());
 			var aDates = Backend.weekDates(oMonday);
-			var sEmail = smail;
-			// 'gaurav.kumar@bluestonex.com';
-			var sOrgId = this._oProfile.orgId;
-			// 'BSX';
 
 			return Backend.getJson(Backend.query(Backend.TIMESHEET, {
 				cmd: "fetch",
-				Email: sEmail,
+				Email: this._sUserEmail,
 				FromDate: Backend.isoDate(aDates[0]),
 				ToDate: Backend.isoDate(aDates[6]),
-				OrgID: sOrgId
+				OrgID: this._sOrgId
 			})).then(function (oData) {
 				this._sUserId = (oData.user || {}).empID || this._sUserId;
 				return oData;
@@ -392,7 +280,7 @@ sap.ui.define([
 				this._oWeekTotals = this._weekTotals(oData);
 				var mLeave = {};
 				Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
-					mLeave[String(oEntry.Date).slice(0, 10)] = oEntry;
+					mLeave[Backend.dayKey(oEntry.Date)] = oEntry;
 				});
 
 				var iWorkingDays = DAYS.filter(function (oDay) {
@@ -584,7 +472,7 @@ sap.ui.define([
 		_bookedMinutes: function (oData, sDate) {
 			return (oData.assignments || []).reduce(function (iTotal, oAssignment) {
 				return iTotal + (oAssignment.TimeEntries || []).filter(function (oEntry) {
-					return String(oEntry.Date).slice(0, 10) === sDate;
+					return Backend.dayKey(oEntry.Date) === sDate;
 				}).reduce(function (iSum, oEntry) {
 					return iSum + Backend.toMinutes(oEntry.Hours);
 				}, 0);
@@ -619,7 +507,7 @@ sap.ui.define([
 				var iBooked = 0;
 
 				var oLeaveEntry = Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).filter(function (oEntry) {
-					return String(oEntry.Date).slice(0, 10) === sDay;
+					return Backend.dayKey(oEntry.Date) === sDay;
 				})[0];
 				var oSchedule = this._oWorkSchedule || {};
 				var sScheduleKey = oDay.toLocaleDateString("en-US", { weekday: "long" });
@@ -640,7 +528,7 @@ sap.ui.define([
 					}
 
 					(oAssignment.TimeEntries || []).forEach(function (oEntry) {
-						if (String(oEntry.Date).slice(0, 10) !== sDay) {
+						if (Backend.dayKey(oEntry.Date) !== sDay) {
 							return;
 						}
 						var sHours = this._trimSeconds(oEntry.Hours);
@@ -686,11 +574,10 @@ sap.ui.define([
 		_loadApprovals: function () {
 			var oModel = this.getModel();
 			oModel.setProperty("/loadingApprovals", true);
-			var smail = CurrentUser.email(this.getOwnerComponent());;
 			return Backend.getJson(Backend.query(Backend.LEAVE_APPROVALS, {
 				cmd: "pendingApproval",
-				Email: smail,
-				OrgID: this._oProfile.orgId
+				Email: this._sUserEmail,
+				OrgID: this._sOrgId
 			})).then(function (oData) {
 				var mByRequester = {};
 
@@ -816,7 +703,7 @@ sap.ui.define([
 			oModel.setProperty("/loadingDay", true);
 
 			Backend.postJson(Backend.TIMESHEET + "?cmd=save", {
-				OrgID: this._oProfile.orgId,
+				OrgID: this._sOrgId,
 				UserID: this._sUserId,
 				SavedOn: Backend.isoDate(oNow),
 				SavedAt: Backend.clockTime(oNow),
@@ -867,7 +754,7 @@ sap.ui.define([
 				cmd: "getDates",
 				FromDate: Backend.isoDate(oEvent.getParameter("from")),
 				ToDate: Backend.isoDate(oEvent.getParameter("to")),
-				OrgID: this._oProfile.orgId,
+				OrgID: this._sOrgId,
 				SiteID: oUser.siteID || "",
 				EmpID: oUser.empID || ""
 			})).then(function (oData) {
@@ -907,8 +794,6 @@ sap.ui.define([
 			var oUser = oModel.getProperty("/user") || {};
 			var aDates = oForm.dates || [];
 
-			var smail = CurrentUser.email(this.getOwnerComponent());
-
 			if (!aDates.length) {
 				MessageToast.show(this.getText("mlNoBookableDays"));
 				return;
@@ -924,11 +809,11 @@ sap.ui.define([
 				var sDayTime = oDay.availableSlot || oForm.DayTime;
 
 				return {
-					OrgID: this._oProfile.orgId,
+					OrgID: this._sOrgId,
 					LeaveID: "",
 					EmpID: oUser.empID,
 					EmpName: oUser.name,
-					EmpEmail: this._oProfile.email,
+					EmpEmail: this._sUserEmail,
 					EmpSite: oUser.siteID || "",
 					IsPaid: oForm.LeaveCategoryId === "UNPDL" ? "N" : "Y",
 					LeaveCategoryId: oForm.LeaveCategoryId,
@@ -999,11 +884,11 @@ sap.ui.define([
 					RequesterName: oGroup.RequesterName,
 					RequesterEmail: oGroup.RequesterEmail,
 					Status: sStatus,
-					OrgID: this._oProfile.orgId,
+					OrgID: this._sOrgId,
 					ApprovedOn: sToday,
 					ApprovedBy: this._oProfile.empID,
 					ApproverName: this._oProfile.name,
-					ApproverEmail: this._oProfile.email
+					ApproverEmail: this._sUserEmail
 				};
 			}, this);
 

@@ -31,6 +31,11 @@ sap.ui.define([
 		admin: "navAdmin"
 	};
 
+	// Pages whose controller offers an onRefresh - the shell bar's reload button is
+	// theirs. Driven off the route rather than off whichever page the NavContainer
+	// reports, which during a transition is still the page being left behind.
+	var aRefreshableRoutes = ["home", "timesheet", "leave", "teamcal"];
+
 	// Which nav row to light up for the pages that are reached from the App Explorer.
 	var mRouteToNavKey = {
 		resources: "explorer",
@@ -139,6 +144,32 @@ sap.ui.define([
 			var aStrip = oModel.getProperty("/healthStrip") || [];
 
 			oModel.setProperty("/page/showStrip", this._sRoute === "home" && aStrip.length > 0);
+			oModel.setProperty("/page/showRefresh", aRefreshableRoutes.indexOf(this._sRoute) !== -1);
+		},
+
+		/**
+		 * Read at press time rather than on the route match: the NavContainer is still
+		 * transitioning when the route fires, so the page it reports then is the one
+		 * being left behind.
+		 * @returns {sap.ui.core.mvc.Controller|null} the controller of the page on
+		 * screen, when it offers a reload of its own
+		 */
+		_currentPageController: function () {
+			var oPage = this.byId("appNavContainer").getCurrentPage();
+			var oController = oPage && oPage.getController && oPage.getController();
+
+			return (oController && typeof oController.onRefresh === "function") ? oController : null;
+		},
+
+		/**
+		 * Reloads whatever page is on screen. The button lives on the shell bar now, so
+		 * it has to ask the page rather than the page owning a button of its own.
+		 */
+		onRefreshPage: function () {
+			var oController = this._currentPageController();
+			if (oController) {
+				oController.onRefresh();
+			}
 		},
 
 		/**

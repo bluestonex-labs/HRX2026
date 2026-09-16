@@ -17,8 +17,14 @@
 		     leaving an empty column behind. -->
 		<HBox wrap="Wrap" alignItems="Stretch" class="hrxActionRow sapUiSmallMarginBottom">
 
-			<!-- Approvals: only a manager has anything to decide -->
-			<f:Card id="approvalsCard" visible="{app>/user/isManager}" class="hrxHomeCard">
+			<!-- Approvals: shown to whoever actually has something waiting on them.
+			     Keying this off the profile's isManager flag instead left the card
+			     hidden on the home page while the very same requests were listed in the
+			     team calendar. -->
+			<f:Card
+				id="approvalsCard"
+				visible="{= ${home>/approvals}.length > 0 }"
+				class="hrxHomeCard">
 				<f:header>
 					<card:Header
 						title="{i18n>approvalsTitle}"
@@ -124,24 +130,33 @@
 								state="{= ${home>/quickLeave/NoOfDays} > 0 ? 'Success' : 'None' }" />
 						</HBox>
 
+						<!-- FlexBox wraps every child in a flex item of its own, so the class
+						     that pushes the button to the foot of the card has to land on that
+						     wrapper - a margin-top:auto on the button itself sits inside the
+						     wrapper and moves nothing. This is what keeps the two cards' submit
+						     buttons on one line despite their different number of fields. -->
 						<Button
 							id="qlSubmit"
 							text="{i18n>btnRequestLeave}"
 							type="Emphasized"
 							width="100%"
 							enabled="{= ${home>/quickLeave/NoOfDays} > 0 }"
-							press=".onRequestLeave"
-							class="hrxCardFooterButton" />
+							press=".onRequestLeave">
+							<layoutData>
+								<FlexItemData styleClass="hrxCardFooterButton" />
+							</layoutData>
+						</Button>
 					</VBox>
 				</f:content>
 			</f:Card>
 
 			<!-- Quick Timesheet -->
 			<f:Card id="quickTimesheetCard" class="hrxHomeCard">
+				<!-- No subtitle: the day is already the first field of the form, and a
+				     second line here is what pushed this card's fields out of line with
+				     Quick Leave's next to it. -->
 				<f:header>
-					<card:Header
-						title="{i18n>quickTimesheetTitle}"
-						subtitle="{home>/quick/dayLabel}" />
+					<card:Header title="{i18n>quickTimesheetTitle}" />
 				</f:header>
 				<f:content>
 					<VBox class="hrxCardBody hrxQuickCardBody" width="100%" busy="{home>/loadingDay}" busyIndicatorDelay="0">
@@ -166,15 +181,20 @@
 								visible="{= !${home>/quick/dayEditable} }" />
 
 							<Label text="{i18n>fieldProject}" required="true" />
+							<!-- The projects bookable on the chosen day, loaded by _loadDay.
+							     This used to bind /projectTypes, which nothing ever fills, so
+							     the list read "No data" - the controller worked around it by
+							     pushing items in by hand, which the (empty) binding then wiped
+							     again on the next model update. -->
 							<ComboBox
 								id="qtProject"
 								width="100%"
 								enabled="{home>/quick/dayEditable}"
 								selectedKey="{home>/quick/ProjectID}"
-								items="{home>/projectTypes}"
+								items="{home>/quick/projects}"
 								placeholder="{i18n>qtProjectPlaceholder}"
 								class="sapUiTinyMarginBottom">
-								<core:Item key="{home>ProjectKey}" text="{home>label}" />
+								<core:Item key="{home>ProjectID}" text="{home>label}" />
 							</ComboBox>
 
 							<Label text="{i18n>fieldTimeSpent}" required="true" />
@@ -203,8 +223,11 @@
 								type="Emphasized"
 								width="100%"
 								enabled="{home>/quick/dayEditable}"
-								press=".onSaveQuickTimesheet"
-								class="hrxCardFooterButton" />
+								press=".onSaveQuickTimesheet">
+								<layoutData>
+									<FlexItemData styleClass="hrxCardFooterButton" />
+								</layoutData>
+							</Button>
 						</VBox>
 
 						<!-- Already booked: what the day holds, straight from the service -->
@@ -236,7 +259,11 @@
 								type="Transparent"
 								width="100%"
 								press=".onLogMoreTime"
-								class="sapUiTinyMarginTop hrxCardFooterButton" />
+								class="sapUiTinyMarginTop">
+								<layoutData>
+									<FlexItemData styleClass="hrxCardFooterButton" />
+								</layoutData>
+							</Button>
 						</VBox>
 					</VBox>
 				</f:content>

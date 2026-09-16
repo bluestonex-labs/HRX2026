@@ -114,6 +114,40 @@ sap.ui.define([], function () {
 		},
 
 		/**
+		 * Reduces any date the services hand back to the day it falls on, so two of
+		 * them can be compared whatever shape each arrived in. The xsjs services answer
+		 * "yyyy-MM-dd", OData answers "/Date(<ms>)/" and the model hands back real Date
+		 * objects - slicing the first ten characters off the raw value only works for
+		 * the first of the three, which is what left booked time invisible on the home
+		 * page's week snapshot while the timesheet grid showed it.
+		 * @param {Date|string} vDate any date shape the services return
+		 * @returns {string} the day as yyyy-MM-dd, or "" when it cannot be read
+		 */
+		dayKey: function (vDate) {
+			if (!vDate || vDate === "None") {
+				return "";
+			}
+
+			// Already a plain calendar day: take it as written rather than through a
+			// Date, which would read it as UTC midnight and shift it a day west of
+			// Greenwich.
+			if (typeof vDate === "string" && /^\d{4}-\d{2}-\d{2}/.test(vDate)) {
+				return vDate.slice(0, 10);
+			}
+
+			var oDate = vDate instanceof Date ? vDate : null;
+			if (!oDate) {
+				var aTicks = /^\/Date\((-?\d+)\)\/$/.exec(String(vDate));
+				oDate = new Date(aTicks ? parseInt(aTicks[1], 10) : vDate);
+			}
+			if (isNaN(oDate.getTime())) {
+				return "";
+			}
+
+			return this.isoDate(oDate);
+		},
+
+		/**
 		 * @param {Date} oDate a moment
 		 * @returns {string} the time as hh:mm:ss, zero padded
 		 */
