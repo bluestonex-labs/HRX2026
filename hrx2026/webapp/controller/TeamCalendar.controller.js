@@ -93,7 +93,9 @@ sap.ui.define([
 
 				if (!this._sUserEmail) {
 					oViewModel.setProperty("/busy", false);
-					this._showError("tcErrorNoIdentity", null);
+					if (CurrentUser.shouldReportMissingIdentity()) {
+						this._showError("tcErrorNoIdentity", null);
+					}
 					return undefined;
 				}
 

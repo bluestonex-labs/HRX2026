@@ -109,7 +109,9 @@ sap.ui.define([
 
 				if (!this._sUserEmail) {
 					this.getModel("tsView").setProperty("/busy", false);
-					this._showError("tsErrorNoIdentity", null);
+					if (CurrentUser.shouldReportMissingIdentity()) {
+						this._showError("tsErrorNoIdentity", null);
+					}
 					return undefined;
 				}
 

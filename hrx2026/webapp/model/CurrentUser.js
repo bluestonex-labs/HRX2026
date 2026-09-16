@@ -7,6 +7,7 @@ sap.ui.define([
 
 	var oProfile = null;
 	var pProfile = null;
+	var bMissingIdentityReported = false;
 
 	/**
 	 * @param {sap.ui.core.UIComponent} oComponent the app component
@@ -103,11 +104,13 @@ sap.ui.define([
 			// A deployment must never do that: an unresolved email there means the
 			// session is broken, and loading somebody else's data instead is the bug
 			// that surfaced as "refreshing My Leave shows another person's details".
-			// Lower cased on the way in. The xsjs services match an email whatever its
-			// case, but the OData /Resources filter does not, and the identity the
-			// launchpad and the team service hand back is sometimes upper case - which
-			// silently left the work schedule on its Mon-Fri fallback and dropped the
-			// signed-in user out of their own "viewing as" directory.
+			//
+			// Lower cased once, here, so nothing downstream has to think about it. The
+			// xsjs services match an email whatever its case, but the OData /Resources
+			// filter does not, and the identity the launchpad and the team service hand
+			// back is sometimes upper case - which silently left the work schedule on
+			// its Mon-Fri fallback and dropped the signed-in user out of their own
+			// "viewing as" directory.
 			var sResolvedEmail = (sParamEmail || sEmail ||
 				(isLocalRun() ? "gaurav.kumar@bluestonex.com" : "")).toLowerCase();
 
@@ -201,6 +204,21 @@ sap.ui.define([
 				return Promise.resolve(oComponent._pProfile);
 			}
 			return this.load(oComponent);
+		},
+
+		/**
+		 * Every page notices a session with no identity and every page wants to say so,
+		 * which on its own means a fresh error dialog on each one - and another every
+		 * time the user comes back to a page they have already seen. It is one problem
+		 * with one answer ("sign in again"), so it is reported once.
+		 * @returns {boolean} true the first time it is asked, false afterwards
+		 */
+		shouldReportMissingIdentity: function () {
+			if (bMissingIdentityReported) {
+				return false;
+			}
+			bMissingIdentityReported = true;
+			return true;
 		},
 
 		/**

@@ -86,7 +86,9 @@ sap.ui.define([
 					// calls that would match everybody.
 					oModel.setProperty("/weekRings", []);
 					oModel.setProperty("/approvals", []);
-					this._showError("homeErrorNoIdentity", null);
+					if (CurrentUser.shouldReportMissingIdentity()) {
+						this._showError("homeErrorNoIdentity", null);
+					}
 					return;
 				}
 

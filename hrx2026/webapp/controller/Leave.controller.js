@@ -90,7 +90,9 @@ sap.ui.define([
 
 				if (!this._sUserEmail) {
 					this.getModel("mlView").setProperty("/busy", false);
-					this._showError("mlErrorNoIdentity", null);
+					if (CurrentUser.shouldReportMissingIdentity()) {
+						this._showError("mlErrorNoIdentity", null);
+					}
 					return undefined;
 				}
 
