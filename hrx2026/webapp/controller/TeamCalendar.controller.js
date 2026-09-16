@@ -366,8 +366,43 @@ sap.ui.define([
 		 * @param {sap.ui.base.Event} oEvent the startDateChange event
 		 */
 		onStartDateChange: function (oEvent) {
-			this._applyView(this._currentViewKey(), oEvent.getSource().getStartDate());
+			var sViewKey = this._currentViewKey();
+			var oNewStart = oEvent.getSource().getStartDate();
+
+			if (sViewKey === "month") {
+				oNewStart = this._snapMonthStep(
+					formatter.toDate(this.getModel("tcView").getProperty("/startDate")), oNewStart);
+			}
+
+			this._applyView(sViewKey, oNewStart);
 			this._loadTeam();
+		},
+
+		/**
+		 * Reads a month-view step as the month it was meant to reach.
+		 *
+		 * The calendar steps by exactly as many days as it is showing, which forwards
+		 * from the 1st lands on the 1st of the next month, but backwards lands short
+		 * whenever the previous month is shorter: back from 1 October, 31 days, is 31
+		 * August - so stepping back from October used to show August and skip September
+		 * entirely. A jump (the Today button) is left alone: it is recognisable by
+		 * landing further away than a single step could reach.
+		 * @param {Date} oOldStart where the calendar was
+		 * @param {Date} oNewStart where it says it is going
+		 * @returns {Date} the first day of the month that step was meant to reach
+		 */
+		_snapMonthStep: function (oOldStart, oNewStart) {
+			if (!oOldStart || !oNewStart) {
+				return oNewStart;
+			}
+
+			var iDayMs = 24 * 60 * 60 * 1000;
+			var iDaysBack = Math.round((oOldStart.getTime() - oNewStart.getTime()) / iDayMs);
+
+			if (iDaysBack > 0 && iDaysBack <= this._daysInMonth(oOldStart)) {
+				return new Date(oOldStart.getFullYear(), oOldStart.getMonth() - 1, 1);
+			}
+			return oNewStart;
 		},
 
 		/**
