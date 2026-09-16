@@ -228,9 +228,10 @@ sap.ui.define([
 
 			oViewModel.setProperty("/busy", true);
 			oViewModel.setProperty("/periodLabel", formatter.dateRange(oFirstDay, oLastDay));
-			// The month alone: the period label above the calendar already carries the
-			// year, and this one sits in a narrow column under each name.
-			oViewModel.setProperty("/periodMonth", oFirstDay.toLocaleDateString("en-GB", { month: "long" }));
+			// Short, and without the year: this goes in the narrow column under each
+			// name, where the full month name is truncated away, and the period label
+			// above the calendar already carries the year.
+			oViewModel.setProperty("/periodMonth", oFirstDay.toLocaleDateString("en-GB", { month: "short" }));
 
 			return this._getJson(TEAM_SERVICE + "?cmd=team&" + new URLSearchParams({
 				OrgID: this._sOrgId,
