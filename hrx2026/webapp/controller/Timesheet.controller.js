@@ -184,7 +184,7 @@ sap.ui.define([
 				this.getModel("ts").setProperty("/directory", this._strip(oData)
 					.filter(function (oResource) {
 						return oResource.IsActive === "Y" && oResource.Email &&
-							(bSeesEveryone || oResource.Email === this._sUserEmail ||
+							(bSeesEveryone || CurrentUser.sameEmail(oResource.Email, this._sUserEmail) ||
 								oResource.ManagerID === sManagerId);
 					}.bind(this))
 					.map(function (oResource) {
@@ -707,7 +707,7 @@ sap.ui.define([
 		_viewAsName: function (sEmail) {
 			var aDirectory = this.getModel("ts").getProperty("/directory") || [];
 			var oMatch = aDirectory.filter(function (oResource) {
-				return oResource.Email === sEmail;
+				return CurrentUser.sameEmail(oResource.Email, sEmail);
 			})[0];
 			return (oMatch && oMatch.FullName) || sEmail;
 		},
@@ -1151,14 +1151,11 @@ sap.ui.define([
 		},
 
 		_read: function (sPath, mParameters) {
-			var oModel = this.getOwnerComponent().getModel();
-
-			return new Promise(function (resolve, reject) {
-				oModel.read(sPath, Object.assign({}, mParameters, {
-					success: resolve,
-					error: reject
-				}));
-			});
+			// Backend.read, not a bare model.read: it waits for the service metadata,
+			// including the retries Component.js makes after a failed first attempt, so
+			// a momentary outage at startup no longer leaves every value help on the
+			// page empty for the rest of the session.
+			return Backend.read(this.getOwnerComponent().getModel(), sPath, mParameters);
 		},
 
 		_getJson: function (sUrl) {

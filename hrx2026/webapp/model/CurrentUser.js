@@ -47,7 +47,19 @@ sap.ui.define([
 			if (oProfile) {
 				return oProfile.email;
 			}
-			return firstOf(startupParameters(oComponent), "email");
+			return firstOf(startupParameters(oComponent), "email").toLowerCase();
+		},
+
+		/**
+		 * Two emails for the same person can differ in case - the services answer with
+		 * an upper-cased one, /Resources stores a lower-cased one - so they are only
+		 * ever compared through here.
+		 * @param {string} sLeft one email
+		 * @param {string} sRight the other
+		 * @returns {boolean} true when both name the same person
+		 */
+		sameEmail: function (sLeft, sRight) {
+			return !!sLeft && !!sRight && sLeft.toLowerCase() === sRight.toLowerCase();
 		},
 
 		/**
@@ -91,8 +103,13 @@ sap.ui.define([
 			// A deployment must never do that: an unresolved email there means the
 			// session is broken, and loading somebody else's data instead is the bug
 			// that surfaced as "refreshing My Leave shows another person's details".
-			var sResolvedEmail = sParamEmail || sEmail ||
-				(isLocalRun() ? "gaurav.kumar@bluestonex.com" : "");
+			// Lower cased on the way in. The xsjs services match an email whatever its
+			// case, but the OData /Resources filter does not, and the identity the
+			// launchpad and the team service hand back is sometimes upper case - which
+			// silently left the work schedule on its Mon-Fri fallback and dropped the
+			// signed-in user out of their own "viewing as" directory.
+			var sResolvedEmail = (sParamEmail || sEmail ||
+				(isLocalRun() ? "gaurav.kumar@bluestonex.com" : "")).toLowerCase();
 
 			pProfile = Promise.resolve(sResolvedEmail).then(function (sResolvedEmail) {
 				if (!sResolvedEmail) {

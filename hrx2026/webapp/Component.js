@@ -29,6 +29,8 @@ sap.ui.define([
             // set the device model
             this.setModel(models.createDeviceModel(), "device");
 
+            this._retryMetadataOnFailure();
+
             // Seed the shared profile promise before routing starts. App.controller's
             // own health-strip fetch and Home.controller's landing-page fetch both key
             // off oComponent._pProfile - created only after a route has already
@@ -70,6 +72,48 @@ sap.ui.define([
         exit() {
             document.body.classList.remove("hrxApp");
             UIComponent.prototype.exit.apply(this, arguments);
+        },
+
+        /**
+         * An ODataModel reads $metadata once. If that one request fails - a dropped
+         * connection, a gateway hiccup, the service still waking up - the model has no
+         * metadata for the rest of the session and every read against it fails from
+         * then on. That is how the leave type picker on the dashboard, the resource
+         * directory behind "viewing as" and the work schedules all came to be empty at
+         * the same time while the xsjs-backed parts of the same page were fine.
+         *
+         * A handful of spaced-out retries turns that permanent, session-long failure
+         * back into a slow start.
+         */
+        _retryMetadataOnFailure() {
+            var oModel = this.getModel();
+            if (!oModel || typeof oModel.attachMetadataFailed !== "function") {
+                return;
+            }
+
+            var iAttempt = 0;
+            var iMaxAttempts = 3;
+
+            oModel.attachMetadataFailed(function () {
+                if (iAttempt >= iMaxAttempts) {
+                    console.error("Service metadata could not be loaded after " + iMaxAttempts +
+                        " attempts; lists backed by it will stay empty.");
+                    return;
+                }
+
+                iAttempt++;
+                // Backs off so a service that is still starting up is given time,
+                // rather than being hammered: 1s, then 2s, then 4s.
+                setTimeout(function () {
+                    oModel.refreshMetadata();
+                }, Math.pow(2, iAttempt - 1) * 1000);
+            });
+
+            // A later success means the trouble was transient, so a fresh outage gets
+            // its own full set of retries.
+            oModel.attachMetadataLoaded(function () {
+                iAttempt = 0;
+            });
         },
 
         /**

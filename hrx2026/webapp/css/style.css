@@ -1099,9 +1099,12 @@ body.hrxApp {
 
 /* The flex box theme sets its item sizing with !important, so matching it is the
    only way to make the cards share the row evenly. */
+/* The basis is what decides when the row wraps. At 320px three cards plus their
+   gaps came to just over the content width of a 1280px laptop, so the third card
+   dropped onto a row of its own and the page needed scrolling for what fits. */
 .hrxApp .hrxActionRow > .sapMFlexItem {
-	flex: 1 1 320px !important;
-	min-width: 280px !important;
+	flex: 1 1 300px !important;
+	min-width: 260px !important;
 	max-width: 560px !important;
 }
 
@@ -1311,8 +1314,25 @@ body.hrxApp {
 	margin-top: 4px;
 }
 
-.hrxApp .hrxCardRow.sapUiRespGrid > .sapFCard,
-.hrxApp .hrxCardRow.sapUiRespGrid > .hrxKpi {
+/* sap.ui.layout.Grid wraps every child in a span div of its own, so these have to
+   go through that wrapper - a rule on the card as a direct child of the grid
+   matches nothing. The wrappers are stretched to the tallest of them by the flex
+   row above; this passes that height on to the card inside, which is what keeps a
+   row of cards reading as one band now that they no longer carry hard-coded
+   heights. */
+.hrxApp .hrxCardRow.sapUiRespGrid > [class*="sapUiRespGridSpan"] {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+}
+
+.hrxApp .hrxCardRow.sapUiRespGrid > [class*="sapUiRespGridSpan"] > .sapFCard,
+.hrxApp .hrxCardRow.sapUiRespGrid > [class*="sapUiRespGridSpan"] > .hrxKpi {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.hrxApp .hrxCardRow.sapUiRespGrid > [class*="sapUiRespGridSpan"] > .sapFCard {
 	display: flex;
 	flex-direction: column;
 }

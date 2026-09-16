@@ -190,7 +190,8 @@ sap.ui.define([
 				var aDirectory = this._strip(aResults[0])
 					.filter(function (oResource) {
 						return oResource.IsActive === "Y" && oResource.Email &&
-							(oResource.Email === this._sUserEmail || oResource.ManagerID === sManagerId);
+							(CurrentUser.sameEmail(oResource.Email, this._sUserEmail) ||
+								oResource.ManagerID === sManagerId);
 					}.bind(this))
 					.map(function (oResource) {
 						oResource.FullName = ((oResource.FName || "") + " " + (oResource.LName || "")).trim();
@@ -817,14 +818,11 @@ sap.ui.define([
 		},
 
 		_read: function (sPath, mParameters) {
-			var oModel = this.getOwnerComponent().getModel();
-
-			return new Promise(function (resolve, reject) {
-				oModel.read(sPath, Object.assign({}, mParameters, {
-					success: resolve,
-					error: reject
-				}));
-			});
+			// Backend.read, not a bare model.read: it waits for the service metadata,
+			// including the retries Component.js makes after a failed first attempt, so
+			// a momentary outage at startup no longer leaves every value help on the
+			// page empty for the rest of the session.
+			return Backend.read(this.getOwnerComponent().getModel(), sPath, mParameters);
 		},
 
 		_getJson: function (sUrl) {

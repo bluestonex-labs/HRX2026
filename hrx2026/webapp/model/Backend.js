@@ -40,6 +40,10 @@ sap.ui.define([], function () {
 		});
 	}
 
+	// How long a read waits for the metadata retries in Component.js (1s + 2s + 4s of
+	// backoff, plus the requests themselves) before giving up.
+	var METADATA_WAIT = 15000;
+
 	// Several cards can want the same week or the same profile at the same moment.
 	// Identical GETs that are still in flight share one request; once a request has
 	// settled it is dropped, so nothing is ever answered from a stale copy.
@@ -88,6 +92,54 @@ sap.ui.define([], function () {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(oPayload)
+			});
+		},
+
+		/**
+		 * Reads an entity set, waiting for the model's metadata first.
+		 *
+		 * An ODataModel read issued before $metadata has landed - or after that one
+		 * request failed - comes back as an error, and the value help it was filling
+		 * stays empty for the rest of the session with nothing on screen to say why.
+		 * Component.js retries a failed metadata load; this waits for the result of
+		 * that retry rather than failing ahead of it.
+		 * @param {sap.ui.model.odata.v2.ODataModel} oModel the OData model
+		 * @param {string} sPath the entity set path
+		 * @param {object} [mParameters] read parameters (filters, urlParameters, ...)
+		 * @returns {Promise<object>} the response
+		 */
+		read: function (oModel, sPath, mParameters) {
+			var fnRead = function () {
+				return new Promise(function (resolve, reject) {
+					oModel.read(sPath, Object.assign({}, mParameters, {
+						success: resolve,
+						error: reject
+					}));
+				});
+			};
+
+			return oModel.metadataLoaded().then(fnRead, function () {
+				// The first metadata attempt failed. Component.js is already retrying
+				// with a backoff, so wait for one of those to land rather than failing
+				// ahead of them. The window covers that whole backoff; past it there is
+				// nothing left to wait for.
+				return new Promise(function (resolve, reject) {
+					var bSettled = false;
+
+					var iTimer = setTimeout(function () {
+						bSettled = true;
+						reject(new Error("Service metadata could not be loaded"));
+					}, METADATA_WAIT);
+
+					oModel.attachEventOnce("metadataLoaded", function () {
+						if (bSettled) {
+							return;
+						}
+						bSettled = true;
+						clearTimeout(iTimer);
+						fnRead().then(resolve, reject);
+					});
+				});
 			});
 		},
 

@@ -153,13 +153,13 @@ sap.ui.define([
 				return Promise.resolve();
 			}
 
-			return new Promise(function (resolve, reject) {
-				this.getOwnerComponent().getModel().read("/LeaveTypes", {
-					filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)],
-					success: resolve,
-					error: reject
-				});
-			}.bind(this)).then(function (oData) {
+			// Backend.read, not a bare model.read: it waits for the service metadata,
+			// including the retries Component.js makes after a failed first attempt. A
+			// momentary outage at startup used to leave this picker empty - "no data" -
+			// for the rest of the session with nothing on screen to say why.
+			return Backend.read(this.getOwnerComponent().getModel(), "/LeaveTypes", {
+				filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)]
+			}).then(function (oData) {
 				this.getModel().setProperty("/leaveTypes", (oData.results || []).map(function (oType) {
 					return {
 						LeaveCategoryId: oType.LeaveCategoryId,
@@ -215,17 +215,13 @@ sap.ui.define([
 				return Promise.resolve();
 			}
 
-			return new Promise(function (resolve, reject) {
-				this.getOwnerComponent().getModel().read("/Resources", {
-					urlParameters: { "$select": "Email," + DAYS.map(function (oDay) { return oDay.abbrev; }).join(",") },
-					filters: [
-						new Filter("OrgID", FilterOperator.EQ, this._sOrgId),
-						new Filter("Email", FilterOperator.EQ, sEmail)
-					],
-					success: resolve,
-					error: reject
-				});
-			}.bind(this)).then(function (oData) {
+			return Backend.read(this.getOwnerComponent().getModel(), "/Resources", {
+				urlParameters: { "$select": "Email," + DAYS.map(function (oDay) { return oDay.abbrev; }).join(",") },
+				filters: [
+					new Filter("OrgID", FilterOperator.EQ, this._sOrgId),
+					new Filter("Email", FilterOperator.EQ, sEmail)
+				]
+			}).then(function (oData) {
 				var oResource = (oData.results || [])[0];
 				this._oWorkSchedule = DAYS.reduce(function (oSchedule, oDay) {
 					oSchedule[oDay.schedule] = oResource && oResource[oDay.abbrev];
