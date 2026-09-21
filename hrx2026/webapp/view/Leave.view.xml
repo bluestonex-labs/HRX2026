@@ -13,38 +13,10 @@
 
 	<Page id="leavePage" showHeader="false" title="{i18n>leaveTitle}" showNavButton="false" class="hrxPageContent">
 
-		<subHeader>
-			<OverflowToolbar id="leaveToolbar" class="">
-				<!-- Only a manager may look at somebody else's leave -->
-				<Label
-					text="{i18n>mlViewingAs}"
-					labelFor="leaveViewAs"
-					visible="false"
-					class="sapUiTinyMarginEnd" />
-				<ComboBox
-					id="leaveViewAs"
-					visible="false"
-					selectedKey="{mlView>/currentEmail}"
-					items="{ml>/directory}"
-					showSecondaryValues="true"
-					width="16rem"
-					change=".onViewAsChange"
-					selectionChange=".onViewAsChange"
-					placeholder="{i18n>mlViewingAsPlaceholder}">
-					<core:ListItem key="{ml>Email}" text="{ml>FullName}" additionalText="{ml>EmpID}" />
-				</ComboBox>
-
-				<ToolbarSpacer />
-
-				<Text text="{i18n>mlApprover} {mlView>/user/managerName}" class="hrxResourceMeta sapUiSmallMarginEnd" />
-				<Button
-					id="leaveRefresh"
-					icon="sap-icon://refresh"
-					type="Transparent"
-					tooltip="{i18n>mlRefreshTooltip}"
-					press=".onRefresh" />
-			</OverflowToolbar>
-		</subHeader>
+		<!-- No sub-header: it held nothing but a hidden picker, a reload button that now
+		     lives on the shell bar with the page title, and the approver's name, which
+		     the New Leave Request card below states anyway. A whole toolbar's height
+		     back on every screen. -->
 
 		<content>
 			<layout:Grid
@@ -99,7 +71,11 @@
 							iconSrc="sap-icon://create-leave-request" />
 					</f:header>
 					<f:content>
-						<VBox class="sapUiSmallMargin" busy="{mlView>/saving}" busyIndicatorDelay="0" width="100%" height="370px">
+						<!-- The three cards are made equal height by the flex row they sit in
+						     (.hrxCardRow), so none of them needs - or should have - a height
+						     of its own: a fixed one clipped the calendar card's legend off at
+						     the bottom of the card. -->
+						<VBox class="hrxLeaveCardBody" busy="{mlView>/saving}" busyIndicatorDelay="0">
 							<Label text="{i18n>fieldDates}" required="true" />
 							<DateRangeSelection
 								id="leaveDateRange"
@@ -168,7 +144,7 @@
 							iconSrc="sap-icon://calendar" />
 					</f:header>
 					<f:content>
-						<VBox class="sapUiSmallMargin" alignItems="Center" busy="{mlView>/busy}" busyIndicatorDelay="0" width="100%" height="370px">
+						<VBox class="hrxLeaveCardBody" alignItems="Center" busy="{mlView>/busy}" busyIndicatorDelay="0">
 							<u:Calendar id="leaveCalendar" showWeekNumbers="false" width="100%" />
 							<u:CalendarLegend id="leaveCalendarLegend" standardItems="Today" class="sapUiSmallMarginTop">
 								<u:items>
@@ -199,7 +175,7 @@
 						</card:NumericHeader>
 					</f:header>
 					<f:content>
-						<VBox class="sapUiSmallMargin" width="100%" height="326px">
+						<VBox class="hrxLeaveCardBody hrxLeaveBreakdown">
 							<Text text="{i18n>mlByTypeTitle}" class="hrxEyebrow sapUiTinyMarginBottom" />
 							<microchart:ComparisonMicroChart
 								id="leaveBreakdownChart"
@@ -231,11 +207,16 @@
 						iconSrc="sap-icon://general-leave-request" />
 				</f:header>
 				<f:content>
+					<!-- No content padding: the table is a card in its own right by default
+					     (see .hrxCardTable in style.css), which put a rounded, shadowed box
+					     inside the card's own rounded box. The table runs the full width of
+					     the tab container instead, and hrxFlushTable takes the inner frame
+					     off it. -->
 					<IconTabBar
 						id="leaveStatusTabs"
 						selectedKey="{mlView>/statusFilter}"
 						select=".onStatusFilter"
-						class="sapUiResponsiveContentPadding">
+						class="hrxFlushTabs">
 						<items>
 							<IconTabFilter key="All" text="{i18n>mlTabAll}" icon="sap-icon://expand-all" />
 							<IconTabSeparator />

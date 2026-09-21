@@ -2,12 +2,16 @@
 	xmlns="sap.m"
 	xmlns:core="sap.ui.core">
 
+	<!-- contentWidth="auto" let the dialog shrink to roughly 40% of the screen, which
+	     wrapped every project name onto two or three lines. A definite width, capped
+	     by max-width in style.css so it still fits a laptop, keeps the three columns
+	     readable. -->
 	<Dialog
 		id="addTimesheetProjectsDialog"
 		title="{i18n>tsAddProjectsTitle}"
-		contentWidth="auto"
-		contentHeight="28rem"
-		resizable="false"
+		contentWidth="60rem"
+		contentHeight="32rem"
+		resizable="true"
 		busy="{tsView>/saving}"
 		busyIndicatorDelay="0"
 		class="hrxPickerDialog">

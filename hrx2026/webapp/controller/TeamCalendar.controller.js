@@ -39,7 +39,11 @@ sap.ui.define([
 		/* =========================================================== */
 
 		onInit: function () {
-			this._sOrgId = this._resolveOrgId();
+			// The signed-in user is resolved in _onRouteMatched, not here: onInit runs
+			// while that lookup is still in flight, and an empty Email is read by the
+			// services as "match anybody".
+			this._sOrgId = CurrentUser.orgId(this.getOwnerComponent());
+			this._sUserEmail = "";
 
 			this.setModel(new JSONModel({
 				startDate: this._mondayOf(new Date()),
@@ -47,10 +51,13 @@ sap.ui.define([
 				saving: false,
 				isManager: false,
 				hasPendingLeave: false,
-				currentEmail: this._sUserEmail,
+				currentEmail: "",
 				currentName: "",
 				currentEmpId: "",
 				periodLabel: "",
+				// "week" or "month" - the away count and the period the calendar loads
+				// both follow whichever view is showing.
+				viewKey: "week",
 				title: this.getText("tcTitle"),
 				selectedResources: []
 			}), "tcView");
@@ -67,21 +74,95 @@ sap.ui.define([
 
 			this.setModel(new JSONModel(this._emptyLeaveForm()), "tcForm");
 
-			this._pDirectoryLoaded = this._loadDirectory();
-
 			this.getOwnerComponent().getRouter().getRoute("teamcal")
 				.attachPatternMatched(this._onRouteMatched, this);
 		},
 
 		/**
 		 * The view is reused across navigations, so every entry returns to the current
-		 * month with no resource filter applied.
+		 * week with no resource filter applied.
 		 */
 		_onRouteMatched: function () {
 			var oViewModel = this.getModel("tcView");
-			oViewModel.setProperty("/startDate", this._mondayOf(new Date()));
 			oViewModel.setProperty("/selectedResources", []);
-			this._pDirectoryLoaded.then(this._loadTeam.bind(this));
+
+			return CurrentUser.ready(this.getOwnerComponent()).then(function (oProfile) {
+				this._sUserEmail = oProfile.email;
+				this._sOrgId = oProfile.orgId;
+				oViewModel.setProperty("/currentEmail", this._sUserEmail);
+
+				if (!this._sUserEmail) {
+					oViewModel.setProperty("/busy", false);
+					if (CurrentUser.shouldReportMissingIdentity()) {
+						this._showError("tcErrorNoIdentity", null);
+					}
+					return undefined;
+				}
+
+				// The view is reused across navigations, so every entry comes back to the
+				// period around today rather than to wherever it was last left.
+				this._applyView(this._currentViewKey(), new Date());
+
+				this._pDirectoryLoaded = this._pDirectoryLoaded || this._loadDirectory();
+				return this._pDirectoryLoaded.then(this._loadTeam.bind(this));
+			}.bind(this));
+		},
+
+		/**
+		 * @returns {string} the key of the view the calendar is showing
+		 */
+		_currentViewKey: function () {
+			var oCalendar = this.byId("teamPlanningCalendar");
+			return (oCalendar && oCalendar.getViewKey()) || "week";
+		},
+
+		/**
+		 * Puts the calendar on the whole period its view is named after, and sizes that
+		 * view to match.
+		 *
+		 * Month view used to keep whatever start date the week view left behind and lay
+		 * a fixed 31 columns out from there, so "September" opened on the 9th and ran
+		 * into October - hiding the leave booked earlier in the month while the label
+		 * over it still said September. A month now starts on the 1st and is exactly as
+		 * many columns wide as that month has days; a week still starts on its Monday.
+		 * @param {string} sViewKey "week" or "month"
+		 * @param {Date} [oAnchor] a day inside the period to show, today by default
+		 */
+		_applyView: function (sViewKey, oAnchor) {
+			var oViewModel = this.getModel("tcView");
+			var oCalendar = this.byId("teamPlanningCalendar");
+			var oDate = oAnchor || formatter.toDate(oViewModel.getProperty("/startDate")) || new Date();
+			var oStart = sViewKey === "month" ? this._firstOfMonth(oDate) : this._mondayOf(oDate);
+
+			oViewModel.setProperty("/viewKey", sViewKey);
+			oViewModel.setProperty("/startDate", oStart);
+
+			if (!oCalendar) {
+				return;
+			}
+
+			if (sViewKey === "month") {
+				var iDays = this._daysInMonth(oStart);
+				var oMonthView = this.byId("teamCalMonthView");
+				if (oMonthView) {
+					// A short month must not draw columns belonging to the next one.
+					oMonthView.setIntervalsL(iDays);
+					oMonthView.setIntervalsM(iDays);
+				}
+			}
+
+			if (oCalendar.getViewKey() !== sViewKey) {
+				oCalendar.setViewKey(sViewKey);
+			}
+			oCalendar.setStartDate(oStart);
+		},
+
+		/**
+		 * @param {Date} oDate any day
+		 * @returns {number} how many days that day's month has
+		 */
+		_daysInMonth: function (oDate) {
+			return new Date(oDate.getFullYear(), oDate.getMonth() + 1, 0).getDate();
 		},
 
 		/* =========================================================== */
@@ -111,7 +192,8 @@ sap.ui.define([
 				var aDirectory = this._strip(aResults[0])
 					.filter(function (oResource) {
 						return oResource.IsActive === "Y" && oResource.Email &&
-							(oResource.Email === this._sUserEmail || oResource.ManagerID === sManagerId);
+							(CurrentUser.sameEmail(oResource.Email, this._sUserEmail) ||
+								oResource.ManagerID === sManagerId);
 					}.bind(this))
 					.map(function (oResource) {
 						oResource.FullName = ((oResource.FName || "") + " " + (oResource.LName || "")).trim();
@@ -135,19 +217,27 @@ sap.ui.define([
 		_loadTeam: function () {
 			var oViewModel = this.getModel("tcView");
 			var oStart = formatter.toDate(oViewModel.getProperty("/startDate")) || new Date();
-			var oFirstDay = this._firstOfMonth(oStart);
+			var bMonth = oViewModel.getProperty("/viewKey") === "month";
 
-			// A week can straddle two months, so the period runs to the end of whichever
-			// month the last visible day falls in.
-			var oLastVisible = new Date(oStart.getFullYear(), oStart.getMonth(), oStart.getDate() + 6);
-			var oLastDay = new Date(oLastVisible.getFullYear(), oLastVisible.getMonth() + 1, 0);
+			// The period loaded is exactly the period on screen, so the away count under
+			// each name counts what the calendar next to it actually shows. It used to
+			// load the whole month whatever the view, which is how a week view came to
+			// report "6 days away" for a week with no leave in it at all.
+			var oFirstDay = bMonth ? this._firstOfMonth(oStart) : oStart;
+			var oLastDay = bMonth
+				? new Date(oStart.getFullYear(), oStart.getMonth() + 1, 0)
+				: new Date(oStart.getFullYear(), oStart.getMonth(), oStart.getDate() + 6);
 
 			oViewModel.setProperty("/busy", true);
 			oViewModel.setProperty("/periodLabel", formatter.dateRange(oFirstDay, oLastDay));
+			// Short, and without the year: this goes in the narrow column under each
+			// name, where the full month name is truncated away, and the period label
+			// above the calendar already carries the year.
+			oViewModel.setProperty("/periodMonth", oFirstDay.toLocaleDateString("en-GB", { month: "short" }));
 
 			return this._getJson(TEAM_SERVICE + "?cmd=team&" + new URLSearchParams({
 				OrgID: this._sOrgId,
-				Email: oViewModel.getProperty("/currentEmail"), //"gaurav.kumar@bluestonex.com",
+				Email: oViewModel.getProperty("/currentEmail"),
 				FromDate: this._isoDate(oFirstDay),
 				ToDate: this._isoDate(oLastDay)
 			}).toString()).then(function (oData) {
@@ -205,6 +295,14 @@ sap.ui.define([
 				};
 			}, this).filter(Boolean);
 
+			// Days, not bookings: an AM and a PM half on the same day are two
+			// appointments but one day away.
+			var mDays = {};
+			aAppointments.forEach(function (oAppointment) {
+				mDays[Backend.dayKey(oAppointment.start)] = true;
+			});
+			var iDays = Object.keys(mDays).length;
+
 			return {
 				EmpID: oUser.EmpID,
 				Name: oUser.Name,
@@ -212,9 +310,32 @@ sap.ui.define([
 				SiteID: oUser.SiteID,
 				Pic: oUser.Pic || "",
 				IsLoggedinUser: oUser.IsLoggedinUser === "Y",
-				LeaveCount: aAppointments.length,
+				LeaveCount: iDays,
+				// Spelt out here rather than in a formatter so it can name the period it
+				// counts: "5 days away" on its own read as a countdown to someone's next
+				// holiday rather than as leave booked in the month on screen.
+				LeaveSummary: this._awayText(iDays),
 				Leave: aAppointments
 			};
+		},
+
+		/**
+		 * @param {number} iDays days of leave in the period on screen
+		 * @returns {string} the line under a person's name
+		 */
+		_awayText: function (iDays) {
+			var oViewModel = this.getModel("tcView");
+			var sMonth = oViewModel.getProperty("/periodMonth");
+
+			if (!iDays) {
+				return this.getText("tcAwayNone");
+			}
+			if (oViewModel.getProperty("/viewKey") === "month") {
+				return iDays === 1
+					? this.getText("tcAwayMonthOne", [sMonth])
+					: this.getText("tcAwayMonth", [iDays, sMonth]);
+			}
+			return iDays === 1 ? this.getText("tcAwayWeekOne") : this.getText("tcAwayWeek", [iDays]);
 		},
 
 		/**
@@ -239,8 +360,64 @@ sap.ui.define([
 		/* calendar events                                             */
 		/* =========================================================== */
 
+		/**
+		 * Stepping back or forward, or pressing Today, moves the calendar by whatever
+		 * its own view thinks a step is - which in month view is 31 days from wherever
+		 * it happens to be standing. Snap back onto a whole week or a whole month so the
+		 * columns always start where the label over them says they do.
+		 * @param {sap.ui.base.Event} oEvent the startDateChange event
+		 */
 		onStartDateChange: function (oEvent) {
-			this.getModel("tcView").setProperty("/startDate", oEvent.getSource().getStartDate());
+			var sViewKey = this._currentViewKey();
+			var oNewStart = oEvent.getSource().getStartDate();
+
+			if (sViewKey === "month") {
+				oNewStart = this._snapMonthStep(
+					formatter.toDate(this.getModel("tcView").getProperty("/startDate")), oNewStart);
+			}
+
+			this._applyView(sViewKey, oNewStart);
+			this._loadTeam();
+		},
+
+		/**
+		 * Reads a month-view step as the month it was meant to reach.
+		 *
+		 * The calendar steps by exactly as many days as it is showing, which forwards
+		 * from the 1st lands on the 1st of the next month, but backwards lands short
+		 * whenever the previous month is shorter: back from 1 October, 31 days, is 31
+		 * August - so stepping back from October used to show August and skip September
+		 * entirely. A jump (the Today button) is left alone: it is recognisable by
+		 * landing further away than a single step could reach.
+		 * @param {Date} oOldStart where the calendar was
+		 * @param {Date} oNewStart where it says it is going
+		 * @returns {Date} the first day of the month that step was meant to reach
+		 */
+		_snapMonthStep: function (oOldStart, oNewStart) {
+			if (!oOldStart || !oNewStart) {
+				return oNewStart;
+			}
+
+			var iDayMs = 24 * 60 * 60 * 1000;
+			var iDaysBack = Math.round((oOldStart.getTime() - oNewStart.getTime()) / iDayMs);
+
+			if (iDaysBack > 0 && iDaysBack <= this._daysInMonth(oOldStart)) {
+				return new Date(oOldStart.getFullYear(), oOldStart.getMonth() - 1, 1);
+			}
+			return oNewStart;
+		},
+
+		/**
+		 * Switching between Week and Month re-anchors the calendar on the whole period
+		 * the new view names.
+		 * @param {sap.ui.base.Event} oEvent the viewChange event
+		 */
+		onViewChange: function (oEvent) {
+			var sViewKey = oEvent.getSource().getViewKey();
+			// Keep the day that was on screen in view rather than jumping to today: the
+			// start of a week showing late September belongs to September's month view,
+			// not to whatever month it is now.
+			this._applyView(sViewKey, formatter.toDate(this.getModel("tcView").getProperty("/startDate")));
 			this._loadTeam();
 		},
 
@@ -679,14 +856,11 @@ sap.ui.define([
 		},
 
 		_read: function (sPath, mParameters) {
-			var oModel = this.getOwnerComponent().getModel();
-
-			return new Promise(function (resolve, reject) {
-				oModel.read(sPath, Object.assign({}, mParameters, {
-					success: resolve,
-					error: reject
-				}));
-			});
+			// Backend.read, not a bare model.read: it waits for the service metadata,
+			// including the retries Component.js makes after a failed first attempt, so
+			// a momentary outage at startup no longer leaves every value help on the
+			// page empty for the rest of the session.
+			return Backend.read(this.getOwnerComponent().getModel(), sPath, mParameters);
 		},
 
 		_getJson: function (sUrl) {
@@ -782,11 +956,6 @@ sap.ui.define([
 				Comments: "",
 				NoOfDays: 0
 			};
-		},
-
-		_resolveOrgId: function () {
-			this._sUserEmail = CurrentUser.email(this.getOwnerComponent());
-			return CurrentUser.orgId(this.getOwnerComponent());
 		},
 
 		_errorText: function (oError) {

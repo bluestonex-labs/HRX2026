@@ -59,12 +59,7 @@
 					type="Emphasized"
 					visible="{= ${tcView>/isManager} &amp;&amp; ${tcView>/hasPendingLeave} }"
 					press=".onOpenApprovals" />
-				<Button
-					id="teamCalRefresh"
-					icon="sap-icon://refresh"
-					type="Transparent"
-					tooltip="{i18n>tcRefreshTooltip}"
-					press=".onRefresh" />
+				<!-- Reloading is on the shell bar with the page title. -->
 			</OverflowToolbar>
 		</subHeader>
 
@@ -83,15 +78,19 @@
 				stickyHeader="true"
 				noDataText="{i18n>tcNoData}"
 				startDateChange=".onStartDateChange"
+				viewChange=".onViewChange"
 				appointmentSelect=".onAppointmentSelect"
 				legend="teamCalLegend">
 				<views>
 					<!-- Day intervals, so every booking in the period is laid out on the timeline.
 					     The built-in "Month" view would use whole months as intervals instead.
 					     The week opens first: a month of day columns leaves the date headers
-					     too narrow to read. -->
+					     too narrow to read.
+					     The month's interval count is set by the controller to the number of
+					     days that month actually has - a fixed 31 here drew columns belonging
+					     to the next month whenever the current one was shorter. -->
 					<PlanningCalendarView key="week" intervalType="Day" description="{i18n>tcViewWeek}" intervalsL="7" intervalsM="7" intervalsS="7" />
-					<PlanningCalendarView key="month" intervalType="Day" description="{i18n>tcViewMonth}" intervalsL="31" intervalsM="21" intervalsS="7" />
+					<PlanningCalendarView id="teamCalMonthView" key="month" intervalType="Day" description="{i18n>tcViewMonth}" intervalsL="31" intervalsM="31" intervalsS="7" />
 				</views>
 				<toolbarContent>
 					<Title text="{tcView>/title}" level="H3" />
@@ -103,7 +102,7 @@
 						nonWorkingDays="0,6"
 						icon="{path: 'tc>Pic', formatter: '.formatter.imageSrc'}"
 						title="{tc>Name}"
-						text="{parts: ['tc>LeaveCount'], formatter: '.formatter.leaveDaysText'}"
+						text="{tc>LeaveSummary}"
 						appointments="{path: 'tc>Leave', templateShareable: true}">
 						<appointments>
 							<unified:CalendarAppointment
@@ -120,15 +119,25 @@
 				</rows>
 			</PlanningCalendar>
 
-			<unified:CalendarLegend id="teamCalLegend" class="sapUiSmallMarginTop">
-				<unified:items>
+			<!-- sap.m.PlanningCalendarLegend, not the plain unified CalendarLegend, and
+			     the leave types go in appointmentItems rather than items: the calendar
+			     paints a booking as a CalendarAppointment, whose Type01-05 colours come
+			     from a different set of theme parameters than a *day* type's. Listed as
+			     day types, the legend showed one colour while the timeline drew another -
+			     the dark-orange "Holiday" swatch over pale blue holiday blocks. -->
+			<PlanningCalendarLegend
+				id="teamCalLegend"
+				standardItems="Today,NonWorkingDay"
+				appointmentItemsHeader="{i18n>tcLegendLeaveHeader}"
+				class="sapUiSmallMarginTop">
+				<appointmentItems>
 					<unified:CalendarLegendItem text="{i18n>tcLegendHoliday}" type="Type01" />
 					<unified:CalendarLegendItem text="{i18n>tcLegendSick}" type="Type02" />
 					<unified:CalendarLegendItem text="{i18n>tcLegendUnpaid}" type="Type03" />
 					<unified:CalendarLegendItem text="{i18n>tcLegendCompassionate}" type="Type04" />
 					<unified:CalendarLegendItem text="{i18n>tcLegendBankHoliday}" type="Type05" />
-				</unified:items>
-			</unified:CalendarLegend>
+				</appointmentItems>
+			</PlanningCalendarLegend>
 		</content>
 	</Page>
 </mvc:View>
