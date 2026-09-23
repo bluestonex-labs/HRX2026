@@ -22,17 +22,26 @@ sap.ui.define([
 		return (oParameters[sName] && oParameters[sName].length && oParameters[sName][0]) || "";
 	}
 
+	// A Business Application Studio workspace previews the app on a host of its own.
+	// Deployments live on hana.ondemand.com, so this never matches one.
+	var BAS_HOST_SUFFIX = ".applicationstudio.cloud.sap";
+
 	/**
-	 * Only a machine running the app off the development server has no identity to
-	 * resolve. Anywhere else - a launchpad site, an approuter, a preview in BAS - an
-	 * email that could not be read means something is wrong with the session, and
-	 * standing in a colleague's shoes is far worse than showing nothing: that is what
-	 * put somebody else's leave balance and timesheet on screen after a refresh.
-	 * @returns {boolean} true when the app is being served locally
+	 * A development preview - the local server, or a BAS workspace - has neither an
+	 * approuter nor a launchpad in front of it, so there is no session to resolve an
+	 * identity from and the app needs a stand-in to be usable at all.
+	 *
+	 * Nowhere else does. On a real deployment an email that could not be read means
+	 * the session is broken, and standing in a colleague's shoes is far worse than
+	 * showing nothing: that is what put somebody else's leave balance and timesheet
+	 * on screen after a refresh.
+	 * @returns {boolean} true when the app is being previewed by a developer
 	 */
-	function isLocalRun() {
+	function isDevPreview() {
 		var sHost = (window.location && window.location.hostname) || "";
-		return sHost === "localhost" || sHost === "127.0.0.1" || sHost === "[::1]" || sHost === "";
+
+		return sHost === "localhost" || sHost === "127.0.0.1" || sHost === "[::1]" ||
+			sHost === "" || sHost.slice(-BAS_HOST_SUFFIX.length) === BAS_HOST_SUFFIX;
 	}
 
 	return {
@@ -98,12 +107,15 @@ sap.ui.define([
 			var sOrgId = this.orgId(oComponent);
 			var sToday = Backend.isoDate(new Date());
 
-			// A local run has no approuter and no launchpad in front of it, so there is
-			// no startup parameter and no authenticated session to resolve an email
-			// from - it falls back to a dev identity so the app is usable on a laptop.
-			// A deployment must never do that: an unresolved email there means the
-			// session is broken, and loading somebody else's data instead is the bug
-			// that surfaced as "refreshing My Leave shows another person's details".
+			// A development preview - the local server, or a BAS workspace - has no
+			// approuter and no launchpad in front of it, so there is no startup
+			// parameter and no authenticated session to resolve an email from, and it
+			// falls back to a dev identity so the app is usable while it is being
+			// worked on. Pass ?email= through the launchpad sandbox intent to preview
+			// as somebody else. A deployment must never do this: an unresolved email
+			// there means the session is broken, and loading somebody else's data
+			// instead is the bug that surfaced as "refreshing My Leave shows another
+			// person's details".
 			//
 			// Lower cased once, here, so nothing downstream has to think about it. The
 			// xsjs services match an email whatever its case, but the OData /Resources
@@ -112,7 +124,7 @@ sap.ui.define([
 			// its Mon-Fri fallback and dropped the signed-in user out of their own
 			// "viewing as" directory.
 			var sResolvedEmail = (sParamEmail || sEmail ||
-				(isLocalRun() ? "gaurav.kumar@bluestonex.com" : "")).toLowerCase();
+				(isDevPreview() ? "gaurav.kumar@bluestonex.com" : "")).toLowerCase();
 
 			pProfile = Promise.resolve(sResolvedEmail).then(function (sResolvedEmail) {
 				if (!sResolvedEmail) {
