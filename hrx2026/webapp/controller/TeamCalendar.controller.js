@@ -19,6 +19,12 @@ sap.ui.define([
 	var LEAVE_REQS_SERVICE = SERVICE_ROOT + "/hrx/leaveReqs.xsjs";
 	var LEAVE_APPROVALS_SERVICE = SERVICE_ROOT + "/hrx/leaveApprovals.xsjs";
 
+	// UserTypeKey on the /Resources entity. The calendar opens on the permanent
+	// staff: contractors are a small minority who come and go, and their leave is
+	// not what the team is planning around day to day.
+	var STAFF = "S";
+	var CONTRACTOR = "C";
+
 	// The calendar colours each leave type through its appointment type.
 	var LEAVE_TYPES = {
 		HOLIL: { type: "Type01", icon: "sap-icon://general-leave-request" },
@@ -58,6 +64,9 @@ sap.ui.define([
 				// "week" or "month" - the away count and the period the calendar loads
 				// both follow whichever view is showing.
 				viewKey: "week",
+				// The calendar opens on staff; contractors are a step away rather than
+				// mixed in, and "all" is there for when both are wanted.
+				resourceType: STAFF,
 				title: this.getText("tcTitle"),
 				selectedResources: []
 			}), "tcView");
@@ -85,6 +94,7 @@ sap.ui.define([
 		_onRouteMatched: function () {
 			var oViewModel = this.getModel("tcView");
 			oViewModel.setProperty("/selectedResources", []);
+			oViewModel.setProperty("/resourceType", STAFF);
 
 			return CurrentUser.ready(this.getOwnerComponent()).then(function (oProfile) {
 				this._sUserEmail = oProfile.email;
@@ -189,7 +199,18 @@ sap.ui.define([
 					filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)]
 				})
 			]).then(function (aResults) {
-				var aDirectory = this._strip(aResults[0])
+				var aResources = this._strip(aResults[0]);
+
+				// Staff or contractor is only on the /Resources entity - the team
+				// service says nothing about it - so the type is taken from the list
+				// already being read here rather than by fetching it again. Keyed by
+				// EmpID, which is what the calendar rows carry.
+				this._mResourceType = aResources.reduce(function (mTypes, oResource) {
+					mTypes[oResource.EmpID] = oResource.UserTypeKey;
+					return mTypes;
+				}, {});
+
+				var aDirectory = aResources
 					.filter(function (oResource) {
 						return oResource.IsActive === "Y" && oResource.Email &&
 							(CurrentUser.sameEmail(oResource.Email, this._sUserEmail) ||
@@ -310,6 +331,10 @@ sap.ui.define([
 				SiteID: oUser.SiteID,
 				Pic: oUser.Pic || "",
 				IsLoggedinUser: oUser.IsLoggedinUser === "Y",
+				// Somebody the resource list does not cover is shown rather than
+				// hidden: an unknown type must not make a person disappear from the
+				// default view with no way to tell they are missing.
+				IsContractor: (this._mResourceType || {})[oUser.EmpID] === CONTRACTOR,
 				LeaveCount: iDays,
 				// Spelt out here rather than in a formatter so it can name the period it
 				// counts: "5 days away" on its own read as a countdown to someone's next
@@ -344,16 +369,33 @@ sap.ui.define([
 		_applyResourceFilter: function () {
 			var oViewModel = this.getModel("tcView");
 			var aSelected = oViewModel.getProperty("/selectedResources") || [];
+			var sType = oViewModel.getProperty("/resourceType");
 			var aAll = this.getModel("tc").getProperty("/allPeople") || [];
 
+			// Naming people is the more specific request, so it wins outright: somebody
+			// picked from the filter is shown whether they are staff or a contractor,
+			// rather than silently dropping out because of the type on the left of it.
 			var aPeople = aSelected.length
 				? aAll.filter(function (oPerson) {
 					return aSelected.indexOf(oPerson.EmpID) !== -1;
 				})
-				: aAll;
+				: aAll.filter(function (oPerson) {
+					if (sType === STAFF) {
+						return !oPerson.IsContractor;
+					}
+					if (sType === CONTRACTOR) {
+						return oPerson.IsContractor;
+					}
+					return true;
+				});
 
 			this.getModel("tc").setProperty("/people", aPeople);
 			oViewModel.setProperty("/title", this.getText("tcTitleCount", [aPeople.length]));
+		},
+
+		onResourceTypeChange: function (oEvent) {
+			this.getModel("tcView").setProperty("/resourceType", oEvent.getSource().getSelectedKey());
+			this._applyResourceFilter();
 		},
 
 		/* =========================================================== */
