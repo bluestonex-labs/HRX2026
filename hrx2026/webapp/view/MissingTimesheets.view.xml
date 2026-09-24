@@ -11,7 +11,7 @@
 	<Page id="missingTimesheetsPage" showHeader="false" title="{i18n>mtTitle}" showNavButton="false" class="hrxPageContent">
 
 		<subHeader>
-			<OverflowToolbar id="missingTimesheetsToolbar">
+			<OverflowToolbar id="missingTimesheetsToolbar" class="hrxFilterBar">
 				<Button
 					id="missingPrevMonth"
 					icon="sap-icon://navigation-left-arrow"
@@ -73,7 +73,7 @@
 				<VBox class="hrxKpi hrxKpiCritical">
 					<core:Icon src="sap-icon://alert" class="hrxKpiGlyph" />
 					<Text text="{i18n>mtKpiMissingHours}" class="hrxKpiLabel" />
-					<HBox alignItems="End">
+					<HBox alignItems="Baseline" class="hrxKpiFigure">
 						<Text text="{mtView>/kpis/missingHours}" class="hrxKpiNum" />
 						<Text text="{i18n>mtHours}" class="hrxKpiUnit" />
 					</HBox>

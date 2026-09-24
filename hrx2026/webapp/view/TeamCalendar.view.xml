@@ -12,7 +12,7 @@
 	<Page id="teamCalPage" showHeader="false" title="{i18n>teamCalendarTitle}" showNavButton="false" class="hrxPageContent">
 
 		<subHeader>
-			<OverflowToolbar id="teamCalToolbar">
+			<OverflowToolbar id="teamCalToolbar" class="hrxFilterBar">
 				<!-- Only a manager may look at somebody else's calendar -->
 				<Label
 					text="{i18n>tcViewingAs}"

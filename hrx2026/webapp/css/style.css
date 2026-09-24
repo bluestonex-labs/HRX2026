@@ -223,10 +223,17 @@ body.hrxApp {
 	flex-shrink: 0;
 }
 
-/* The reload button sits on the title's own baseline rather than floating above
-   it, so the bar reads as one row. */
+/* The bar's items are bottom-aligned to the eyebrow/title stack, so each is set
+   to centre on the title's own line rather than on the stack: a 26px button's
+   centre lands on the 24px title's when it overhangs the title by 1px. (It was
+   -4px, which left it 3px low.) */
 .hrxApp .hrxCrumbAction {
-	margin-bottom: -4px;
+	margin-bottom: -1px;
+}
+
+/* Out to the far right of the bar, on the page gutter. */
+.hrxApp .hrxCrumbActionSlot {
+	margin-left: auto;
 }
 
 /* ── NAV TOGGLE ───────────────────────────────────────────────────────────── */
@@ -309,7 +316,8 @@ body.hrxApp {
 
 .hrxHealthStrip {
 	margin-left: 24px;
-	margin-bottom: 2px;
+	/* centres the pills on the title's line - see .hrxCrumbAction */
+	margin-bottom: 3px;
 	flex-shrink: 0;
 }
 
@@ -345,6 +353,31 @@ body.hrxApp {
 .hrxApp .sapMPageSubHeader .sapMTB {
 	background: var(--surface);
 	border-bottom: 1px solid var(--line);
+	box-shadow: none;
+}
+
+/* A page's own filter row - who and which period to look at - sits straight on
+   the page, not on a white strip of its own. The strip read as one more card with
+   nothing in it, stretched edge to edge above the real ones.
+   No side padding: the sub-header already starts on the page gutter, so the first
+   and last controls line up with the title above and the cards below as they are.
+   Padding here as well set them a further 20px in. */
+.hrxApp .sapMPageSubHeader .sapMTB.hrxFilterBar {
+	background: transparent;
+	border-bottom: none;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.hrxApp .sapMPage > .sapMPageSubHeader:has(.hrxFilterBar) {
+	background: transparent;
+	box-shadow: none;
+}
+
+/* The theme draws the sub-header's separator line and its drop shadow on this
+   pseudo-element rather than on the sub-header itself, so with the strip gone the
+   line was left behind on its own, running through the gaps between the cards. */
+.hrxApp .sapMPage > .sapMPageSubHeader:has(.hrxFilterBar)::after {
 	box-shadow: none;
 }
 
@@ -955,12 +988,17 @@ body.hrxApp {
 	margin-top: 10px;
 }
 
+/* The unit sits on its number's baseline - the HBox around the pair is
+   alignItems="Baseline" (hrxKpiFigure). It used to bottom-align the two boxes
+   and nudge the unit up with padding, which only approximates a baseline: the
+   36px figure carries a deeper descent than the 16px unit, so "day(s)" hung
+   about 4px below the number it belongs to. */
 .hrxApp .hrxKpiUnit {
 	font-family: var(--disp);
 	font-size: 16px;
 	font-weight: 700;
 	color: var(--txt-2);
-	padding: 0 0 4px 3px;
+	padding: 0 0 0 4px;
 }
 
 .hrxApp .hrxKpiSub {
@@ -1071,13 +1109,6 @@ body.hrxApp {
 	color: var(--ink);
 }
 
-/* hSpacing="1" on this page's Grids brings the theme's default 0 0.25rem side
-   padding on the grid container itself - dropped so those rows line up flush
-   with the page's other edges. */
-.hrxTimesheet .sapUiRespGridHSpace05 {
-	padding: 0;
-}
-
 /* ── HOME ─────────────────────────────────────────────────────────────────── */
 
 /* The page otherwise sits flush against the shell's left edge. */
@@ -1157,6 +1188,15 @@ body.hrxApp {
 	flex-direction: column;
 	flex: 1 1 auto;
 	min-height: 0;
+}
+
+/* The week's hours-to-book pill, in the Timesheet card's header, centred on the
+   card title beside it. The title's column is padded 16px down from the top of the
+   header and the toolbar slot the pill sits in is not, which left the pill riding
+   12px above the title's line. 12px here, rather than the title's 16, because the
+   24px pill is taller than the title's line - this is what puts their centres level. */
+.hrxApp .hrxHomePage .sapFCardHeaderToolbarCont {
+	padding-top: 12px;
 }
 
 /* Set through FlexItemData's styleClass, so it lands on the flex item wrapper
@@ -1303,15 +1343,14 @@ body.hrxApp {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: stretch;
-	padding-top: 0 !important;
-}
-
-/* One gap between rows of cards, the same size as the gap between the cards in a
-   row - the grid's own vSpacing plus a padding-top on the row below it added up
-   to roughly twice the space anywhere else on the page. */
-.hrxApp .hrxCardRow.sapUiRespGrid + .hrxCardRow.sapUiRespGrid,
-.hrxApp .hrxCardRow.sapUiRespGrid + .sapFCard {
-	margin-top: 4px;
+	padding: 0 !important;
+	/* Every row of cards is hSpacing="1" vSpacing="1", which the grid applies as
+	   margin: 0 .5rem 1rem on each card. That gives a 16px gap both between the
+	   cards in a row and between one row and the next - but the .5rem on the
+	   outer edges also set the whole row 8px in from the page title and from
+	   full-width cards like My Requests. Pulling the row out by the same .5rem
+	   puts its outer edges back on the page gutter. */
+	margin: 0 -0.5rem;
 }
 
 /* sap.ui.layout.Grid wraps every child in a span div of its own, so these have to
@@ -1468,15 +1507,6 @@ body.hrxApp {
 	-webkit-column-count: 2 !important;
 }
 
-/* The Grids on this page bring the theme's default side padding on the grid
-   container itself - dropped so those rows line up flush with the page's other
-   edges. Both spacings are listed: this page uses hSpacing="1", which is a
-   different class from the timesheet page's hSpacing="0.5". */
-.hrxMyLeave .sapUiRespGridHSpace05,
-.hrxMyLeave .sapUiRespGridHSpace1 {
-	padding: 0;
-}
-
 /* The three cards on this row are stretched to a common height by the flex row
    they sit in, so their bodies fill whatever that height turns out to be. They
    used to carry hard-coded heights instead, which cut the calendar card's legend
@@ -1511,6 +1541,45 @@ body.hrxApp {
 	box-sizing: border-box;
 }
 
+/* Snapshot's figures - "14 day(s)", and "25 day(s)" / "11 day(s)" beside it - are
+   laid on one baseline, each value under its own label. The card's numeric
+   header ships them on three different lines: the unit pushed down by a fixed
+   margin rather than resting on its number, and the side figures top-aligned in
+   a right-aligned column of their own, 7px below the main figure. Nothing in the
+   row lined up with anything else. */
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapMNCValue {
+	align-items: baseline;
+}
+
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapMNCIndScale {
+	display: block;
+	padding: 0 0 0 5px;
+}
+
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapMNCScale {
+	margin: 0;
+}
+
+/* last baseline, not baseline: a side figure is two lines (label, then value),
+   and it is the value that has to meet the main figure. */
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapFCardNumericIndicators,
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapFCardNumericIndicatorsSide {
+	align-items: last baseline;
+}
+
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapFCardNumericIndicatorsSide {
+	padding: 0;
+}
+
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapFCardHeaderSideIndicator {
+	align-items: flex-start;
+}
+
+/* The value and its unit are two spans with nothing between them: "25day(s)". */
+.hrxApp .hrxMyLeave .sapFCardNumericHeader .sapFCardHeaderSINumber > .sapMText + .sapMText {
+	margin-left: 4px;
+}
+
 /* A Responsive chart takes the height it is given; in a flex column with nothing
    below it that is whatever is left, which can round down to nothing. Give it a
    floor so every bar and its figure stay readable. */
@@ -1534,8 +1603,8 @@ body.hrxApp {
 
 /* Rows that may not be deleted (BlueStoneX's own projects, and the read-only
    leave and holiday rows) keep their column for alignment but show no checkbox.
-   The controller refuses the selection as well - "select all" never touches the
-   DOM - so this is the visual half of that rule, not the rule itself. */
+   The rule itself lives in control/TimesheetRow, which makes those rows
+   unselectable; this is only the visual half of it. */
 .hrxApp .sapMListTbl tr[data-deletable="false"] > .sapMListTblSelCol > * {
 	visibility: hidden;
 }

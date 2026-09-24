@@ -28,7 +28,7 @@
 				<VBox class="hrxKpi hrxKpiNeutral">
 					<core:Icon src="sap-icon://calendar" class="hrxKpiGlyph" />
 					<Text text="{i18n>kpiAnnualQuota}" class="hrxKpiLabel" />
-					<HBox alignItems="End">
+					<HBox alignItems="Baseline" class="hrxKpiFigure">
 						<Text text="{mlView>/kpis/quota}" class="hrxKpiNum" />
 						<Text text="{i18n>mlDays}" class="hrxKpiUnit" />
 					</HBox>
@@ -38,7 +38,7 @@
 				<VBox class="hrxKpi hrxKpiWarning">
 					<core:Icon src="sap-icon://appointment-2" class="hrxKpiGlyph" />
 					<Text text="{i18n>kpiDaysBooked}" class="hrxKpiLabel" />
-					<HBox alignItems="End">
+					<HBox alignItems="Baseline" class="hrxKpiFigure">
 						<Text text="{mlView>/kpis/used}" class="hrxKpiNum" />
 						<Text text="{i18n>mlDays}" class="hrxKpiUnit" />
 					</HBox>
@@ -48,7 +48,7 @@
 				<VBox class="hrxKpi hrxKpiGood">
 					<core:Icon src="sap-icon://flag" class="hrxKpiGlyph" />
 					<Text text="{i18n>kpiDaysRemaining}" class="hrxKpiLabel" />
-					<HBox alignItems="End">
+					<HBox alignItems="Baseline" class="hrxKpiFigure">
 						<Text text="{mlView>/kpis/balance}" class="hrxKpiNum" />
 						<Text text="{i18n>mlDays}" class="hrxKpiUnit" />
 					</HBox>

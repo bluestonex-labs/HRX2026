@@ -815,30 +815,16 @@ sap.ui.define([
 		},
 
 		/**
-		 * Keeps the selection to rows that may actually be deleted. sap.m.Table has no
-		 * per-row switch for this, and its checkbox is hidden by CSS for the rest, but
-		 * "select all" still reaches them - so anything not deletable is dropped again
-		 * here before the count that enables the Delete button is taken.
+		 * Keeps the count behind the Delete button in step with the selection.
+		 *
+		 * Rows that may not be deleted are unselectable in the first place (see
+		 * control/TimesheetRow), so there is nothing to take back here. This used to
+		 * let "select all" reach them and then deselect them again, which is what left
+		 * the select-all checkbox unticked even with every deletable row selected.
 		 * @param {sap.ui.base.Event} oEvent the selectionChange event
 		 */
 		onSelectionChange: function (oEvent) {
-			var oTable = oEvent.getSource();
-			var bRefused = false;
-
-			oTable.getSelectedItems().forEach(function (oItem) {
-				var oContext = oItem.getBindingContext("ts");
-				var oRow = oContext && oContext.getObject();
-				if (oRow && oRow.deletable === false) {
-					oTable.setSelectedItem(oItem, false);
-					bRefused = true;
-				}
-			});
-
-			// if (bRefused) {
-			// 	MessageToast.show(this.getText("tsRowNotDeletable"));
-			// }
-
-			this.getModel("tsView").setProperty("/selectedCount", oTable.getSelectedItems().length);
+			this.getModel("tsView").setProperty("/selectedCount", oEvent.getSource().getSelectedItems().length);
 		},
 
 		/**

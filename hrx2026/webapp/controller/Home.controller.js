@@ -276,6 +276,7 @@ sap.ui.define([
 				var oSchedule = this._oWorkSchedule || {};
 
 				this._oWeekTotals = this._weekTotals(oData);
+				oModel.setProperty("/week/status", this._weekStatus(this._oWeekTotals));
 				var mLeave = {};
 				Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
 					mLeave[Backend.dayKey(oEntry.Date)] = oEntry;
@@ -378,6 +379,7 @@ sap.ui.define([
 				oModel.setProperty("/loadingWeek", false);
 			}.bind(this)).catch(function (oError) {
 				oModel.setProperty("/weekRings", []);
+				oModel.setProperty("/week/status", this._weekStatus(null));
 				oModel.setProperty("/loadingWeek", false);
 				this._showError("homeErrorWeek", oError);
 			}.bind(this));
@@ -428,17 +430,10 @@ sap.ui.define([
 			var oModel = this.getModel();
 			var aStrip = [];
 
-			if (this._oWeekTotals) {
-				aStrip.push(this._oWeekTotals.booked >= this._oWeekTotals.target ? {
-					text: this.getText("stripTimesheetOnTrack"),
-					state: "Success"
-				} : {
-					text: this.getText("stripTimesheetShort", [
-						Backend.fromMinutes(this._oWeekTotals.target - this._oWeekTotals.booked)
-					]),
-					state: "Warning"
-				});
-			}
+			// The hours still to book used to lead this strip. They are the week's own
+			// figure, so they are shown on the Timesheet card with the week they
+			// describe - see _weekStatus - rather than beside the page title, where
+			// nothing said which week or which timesheet they referred to.
 
 			// One pill per person waiting, not per day, so it lines up with the
 			// approvals card on the home page.
@@ -460,6 +455,24 @@ sap.ui.define([
 			}
 
 			oAppController.setHealthStrip(aStrip);
+		},
+
+		/**
+		 * @param {object|null} oTotals the week's booked and target minutes
+		 * @returns {object} the pill on the Timesheet card: what is still to book, or
+		 * that the week is on track - empty when there is no week to judge
+		 */
+		_weekStatus: function (oTotals) {
+			if (!oTotals) {
+				return { text: "", state: "None" };
+			}
+			if (oTotals.booked >= oTotals.target) {
+				return { text: this.getText("stripTimesheetOnTrack"), state: "Success" };
+			}
+			return {
+				text: this.getText("stripTimesheetShort", [Backend.fromMinutes(oTotals.target - oTotals.booked)]),
+				state: "Warning"
+			};
 		},
 
 		/**
@@ -1024,7 +1037,7 @@ sap.ui.define([
 				approvals: [],
 				quickLeave: this._emptyQuickLeave(),
 				quick: this._emptyQuickEntry(),
-				week: { label: "" },
+				week: { label: "", status: { text: "", state: "None" } },
 				weekRings: []
 			};
 		},

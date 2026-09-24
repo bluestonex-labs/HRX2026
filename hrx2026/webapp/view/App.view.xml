@@ -40,12 +40,14 @@
 							<ObjectStatus text="{app>text}" state="{app>state}" class="hrxPill sapUiTinyMarginEnd"/>
 						</HBox>
 
-						<ToolbarSpacer/>
-
 						<!-- Reload sits on the one bar the app already has rather than in a
 						     toolbar of its own on every page: between the launchpad's shell
 						     bar and this one, a strip carrying nothing but a refresh icon was
-						     costing a row of screen height on every screen. -->
+						     costing a row of screen height on every screen. It goes to the far
+						     right, where it was on those toolbars - FlexItemData puts the class
+						     that pushes it there on the flex item wrapper. (A ToolbarSpacer did
+						     nothing here: it only grows inside a toolbar, not an HBox, which is
+						     how the button ended up jammed against the page title.) -->
 						<Button
 							id="pageRefresh"
 							icon="sap-icon://refresh"
@@ -53,7 +55,11 @@
 							tooltip="{i18n>appRefreshTooltip}"
 							visible="{app>/page/showRefresh}"
 							press="onRefreshPage"
-							class="hrxCrumbAction"/>
+							class="hrxCrumbAction">
+							<layoutData>
+								<FlexItemData styleClass="hrxCrumbActionSlot"/>
+							</layoutData>
+						</Button>
 					</HBox>
 				</VBox>
 				<NavContainer id="appNavContainer" height="100%">
