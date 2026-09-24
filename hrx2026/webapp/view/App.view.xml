@@ -1,4 +1,4 @@
-<mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:tnt="sap.tnt" controllerName="bsx.hrx.hrx2026.controller.App" displayBlock="true" height="100%">
+<mvc:View xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:tnt="sap.tnt" xmlns:core="sap.ui.core" controllerName="bsx.hrx.hrx2026.controller.App" displayBlock="true" height="100%" class="hrxAppRoot">
 	<tnt:ToolPage id="toolPage" class="hrxToolPage">
 		<tnt:header>
 			<!-- sap.tnt.SideNavigation has no slot of its own for a logo/toggle row, so
@@ -70,4 +70,30 @@
 			</VBox>
 		</tnt:mainContents>
 	</tnt:ToolPage>
+
+	<!-- Who is signed in, pinned to the foot of the side rail as it is in SupportX:
+	     their initials, their name and their role. sap.tnt.SideNavigation's own
+	     footer slots only take navigation items, so this sits beside the ToolPage
+	     and CSS lays it over the bottom of the rail - the same way the collapse
+	     toggle above is laid over its top. Hidden on a phone, where the rail itself
+	     is not shown. -->
+	<HBox
+		id="railUser"
+		alignItems="Center"
+		visible="{= !!${app>/user/name} &amp;&amp; !${device>/system/phone} }"
+		tooltip="{app>/user/email}"
+		class="hrxRailUser">
+		<customData>
+			<!-- The role picks the avatar's and the tag's colour. A data-* attribute,
+			     since a bound class does not evaluate on `class`. -->
+			<core:CustomData key="role" value="{= ${app>/user/isManager} ? 'manager' : 'employee' }" writeToDom="true"/>
+		</customData>
+		<HBox alignItems="Center" justifyContent="Center" class="hrxRailAvatar">
+			<Text text="{app>/user/initials}" class="hrxRailAvatarText"/>
+		</HBox>
+		<VBox class="hrxRailUserInfo">
+			<Text text="{app>/user/name}" wrapping="false" class="hrxRailUserName"/>
+			<Text text="{= ${app>/user/isManager} ? ${i18n>roleManager} : ${i18n>roleEmployee} }" class="hrxRailRoleTag"/>
+		</VBox>
+	</HBox>
 </mvc:View>

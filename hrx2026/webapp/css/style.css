@@ -212,6 +212,132 @@ body.hrxApp {
 	opacity: 1;
 }
 
+/* ── SIGNED-IN USER ───────────────────────────────────────────────────────── */
+
+/* Who is signed in, at the foot of the rail - the same footer SupportX has: an
+   initials avatar, the name, and a role tag whose colours follow the role
+   (SupportX's green for an employee, its blue for a manager). The values are
+   SupportX's own; its palette and this one come from the same prototype. The
+   footer is laid over the rail from outside it (see App.view.xml), so the view
+   is its positioning context. */
+.hrxAppRoot {
+	position: relative;
+}
+
+.hrxApp .hrxRailUser {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	z-index: 5;
+	/* the rail's own width, expanded and collapsed, and its own transition */
+	width: 16rem;
+	box-sizing: border-box;
+	/* 26px puts the 28px avatar's centre on the nav icons' centre line (40px in),
+	   so the rail reads as one column of glyphs from top to bottom. */
+	padding: 14px 16px 18px 26px;
+	border-top: 1px solid rgba(255, 255, 255, .08);
+	transition: width .3s;
+}
+
+.hrxApp .hrxToolPage.hrxSideCollapsed ~ .hrxRailUser {
+	width: 4rem;
+	padding-left: 0;
+	padding-right: 0;
+	justify-content: center;
+}
+
+.hrxApp .hrxToolPage.hrxSideCollapsed ~ .hrxRailUser .hrxRailUserInfo {
+	display: none;
+}
+
+/* The nav list never runs underneath it. */
+.hrxToolPage .sapTntSideNavigation {
+	padding-bottom: 76px;
+}
+
+.hrxApp .hrxRailAvatar {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	box-sizing: border-box;
+	background: rgba(255, 255, 255, .12);
+	border: 1px solid rgba(255, 255, 255, .18);
+}
+
+.hrxApp .hrxRailUser > .sapMFlexItem:first-child {
+	flex-shrink: 0;
+	margin-right: 9px;
+}
+
+.hrxApp .hrxToolPage.hrxSideCollapsed ~ .hrxRailUser > .sapMFlexItem:first-child {
+	margin-right: 0;
+}
+
+/* min-width: 0 lets a long name ellipsise rather than push the footer wider. */
+.hrxApp .hrxRailUser > .sapMFlexItem:last-child {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.hrxApp .sapMText.hrxRailAvatarText {
+	font-size: 11px;
+	font-weight: 700;
+	color: #FFFFFF;
+}
+
+.hrxApp .sapMText.hrxRailUserName {
+	display: block;
+	font-size: 12.5px;
+	font-weight: 500;
+	color: #E6F0F5;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.hrxApp .sapMText.hrxRailRoleTag {
+	display: inline-block;
+	margin-top: 2px;
+	padding: 1px 6px;
+	border-radius: 4px;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: .4px;
+	text-transform: uppercase;
+	background: rgba(255, 255, 255, .14);
+	color: #FFFFFF;
+}
+
+/* SupportX's .av-green / .rt-user */
+.hrxApp .hrxRailUser[data-role="employee"] .hrxRailAvatar {
+	background: var(--mint-soft);
+	border: 1.5px solid rgba(31, 174, 114, .25);
+}
+
+.hrxApp .hrxRailUser[data-role="employee"] .sapMText.hrxRailAvatarText,
+.hrxApp .hrxRailUser[data-role="employee"] .sapMText.hrxRailRoleTag {
+	color: #0F7B4F;
+}
+
+.hrxApp .hrxRailUser[data-role="employee"] .sapMText.hrxRailRoleTag {
+	background: var(--mint-soft);
+}
+
+/* SupportX's .av-primary / .rt-dev */
+.hrxApp .hrxRailUser[data-role="manager"] .hrxRailAvatar {
+	background: var(--ice-glow);
+	border: 1.5px solid rgba(38, 170, 226, .3);
+}
+
+.hrxApp .hrxRailUser[data-role="manager"] .sapMText.hrxRailAvatarText,
+.hrxApp .hrxRailUser[data-role="manager"] .sapMText.hrxRailRoleTag {
+	color: var(--ice-deep);
+}
+
+.hrxApp .hrxRailUser[data-role="manager"] .sapMText.hrxRailRoleTag {
+	background: var(--ice-glow);
+}
+
 /* ── PAGE HEADER ──────────────────────────────────────────────────────────── */
 
 /* One header bar for the app. The launchpad shell supplies the bar above it, so
