@@ -12,7 +12,7 @@
 	<Page id="teamCalPage" showHeader="false" title="{i18n>teamCalendarTitle}" showNavButton="false" class="hrxPageContent">
 
 		<subHeader>
-			<OverflowToolbar id="teamCalToolbar">
+			<OverflowToolbar id="teamCalToolbar" class="hrxFilterBar">
 				<!-- Only a manager may look at somebody else's calendar -->
 				<Label
 					text="{i18n>tcViewingAs}"
@@ -33,6 +33,20 @@
 				</ComboBox>
 
 				<ToolbarSeparator visible="false" />
+
+				<!-- Staff by default. Contractors come and go and their leave is not what
+				     the team plans around day to day, so they are a step away rather
+				     than mixed into the list. -->
+				<Select
+					id="teamCalResourceType"
+					selectedKey="{tcView>/resourceType}"
+					width="11rem"
+					change=".onResourceTypeChange"
+					class="sapUiTinyMarginEnd">
+					<core:Item key="S" text="{i18n>tcResourceTypeStaff}" />
+					<core:Item key="C" text="{i18n>tcResourceTypeContractors}" />
+					<core:Item key="ALL" text="{i18n>tcResourceTypeAll}" />
+				</Select>
 
 				<MultiComboBox
 					id="teamCalResourceFilter"

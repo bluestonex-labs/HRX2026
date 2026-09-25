@@ -4,6 +4,7 @@
 	xmlns:mvc="sap.ui.core.mvc"
 	xmlns:core="sap.ui.core"
 	xmlns:layout="sap.ui.layout"
+	xmlns:hrx="bsx.hrx.hrx2026.control"
 	displayBlock="true"
 	class="hrxTimesheet">
 
@@ -40,7 +41,7 @@
 			     column, so they cannot overlap however wide the numbers get. -->
 			<layout:Grid
 				defaultSpan="XL4 L4 M4 S12"
-				hSpacing="0.5"
+				hSpacing="1"
 				vSpacing="1"
 				class="hrxCardRow">
 
@@ -61,7 +62,7 @@
 				<VBox class="hrxKpi hrxKpiWarning">
 					<core:Icon src="sap-icon://bar-chart" class="hrxKpiGlyph" />
 					<Text text="{i18n>kpiUtilisation}" class="hrxKpiLabel" />
-					<HBox alignItems="End">
+					<HBox alignItems="Baseline" class="hrxKpiFigure">
 						<Text text="{tsView>/kpis/utilisation}" class="hrxKpiNum" />
 						<Text text="%" class="hrxKpiUnit" />
 					</HBox>
@@ -138,7 +139,7 @@
 						class="hrxHoursLabel" />
 				</HBox>
 
-				<Table
+				<hrx:TimesheetTable
 					id="timesheetTable"
 					items="{path: 'ts>/rows'}"
 					mode="MultiSelect"
@@ -149,7 +150,7 @@
 					sticky="ColumnHeaders"
 					class="hrxInnerTable"
 					selectionChange=".onSelectionChange">
-					<columns>
+					<hrx:columns>
 						<Column width="18rem" vAlign="Middle">
 							<Text text="{i18n>tsColProject}" />
 						</Column>
@@ -202,19 +203,24 @@
 								<Text text="{tsView>/dayHeaders/6/total}" class="hrxDayTotal" />
 							</VBox>
 						</Column>
-					</columns>
-					<items>
-						<ColumnListItem vAlign="Middle" selected="false">
+					</hrx:columns>
+					<hrx:items>
+						<!-- A row that may not be deleted takes no part in the selection, so "select
+						     all" picks exactly the rows the Delete button acts on, and ticks. -->
+						<hrx:TimesheetRow
+							vAlign="Middle"
+							selected="false"
+							selectable="{= ${ts>deletable} !== false }">
 							<!-- A real data-* attribute rather than a bound class, which does
 							     not evaluate on `class`. Written as the string "true"/"false":
 							     writeToDom drops a raw boolean false entirely. -->
-							<customData>
+							<hrx:customData>
 								<core:CustomData
 									key="deletable"
 									value="{= ${ts>deletable} === false ? 'false' : 'true' }"
 									writeToDom="true" />
-							</customData>
-							<cells>
+							</hrx:customData>
+							<hrx:cells>
 								<VBox>
 									<ObjectIdentifier title="{ts>project}" />
 									<HBox alignItems="Center">
@@ -338,10 +344,10 @@
 									press=".onOpenComment"
 									visible="{ts>editable}" />
 							</HBox>
-							</cells>
-						</ColumnListItem>
-					</items>
-				</Table>
+							</hrx:cells>
+						</hrx:TimesheetRow>
+					</hrx:items>
+				</hrx:TimesheetTable>
 
 				<HBox class="hrxCommentNote" alignItems="Center">
 					<core:Icon src="sap-icon://message-information" class="sapUiTinyMarginEnd" />

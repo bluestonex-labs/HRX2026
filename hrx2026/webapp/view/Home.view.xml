@@ -275,7 +275,19 @@
 			<f:header>
 				<card:Header
 					title="{i18n>timesheetCardTitle}"
-					subtitle="{home>/week/label}" />
+					subtitle="{home>/week/label}">
+					<!-- The hours still to book this week sit with the week they describe.
+					     They used to lead the strip beside the page title, where nothing said
+					     which week or which timesheet they belonged to. -->
+					<card:toolbar>
+						<ObjectStatus
+							id="weekStatus"
+							text="{home>/week/status/text}"
+							state="{home>/week/status/state}"
+							visible="{= !!${home>/week/status/text} }"
+							class="hrxPill" />
+					</card:toolbar>
+				</card:Header>
 			</f:header>
 			<f:content>
 				<VBox class="hrxCardBody" width="100%" busy="{home>/loadingWeek}" busyIndicatorDelay="0">

@@ -276,6 +276,7 @@ sap.ui.define([
 				var oSchedule = this._oWorkSchedule || {};
 
 				this._oWeekTotals = this._weekTotals(oData);
+				oModel.setProperty("/week/status", this._weekStatus(this._oWeekTotals));
 				var mLeave = {};
 				Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
 					mLeave[Backend.dayKey(oEntry.Date)] = oEntry;
@@ -378,6 +379,7 @@ sap.ui.define([
 				oModel.setProperty("/loadingWeek", false);
 			}.bind(this)).catch(function (oError) {
 				oModel.setProperty("/weekRings", []);
+				oModel.setProperty("/week/status", this._weekStatus(null));
 				oModel.setProperty("/loadingWeek", false);
 				this._showError("homeErrorWeek", oError);
 			}.bind(this));
@@ -394,10 +396,8 @@ sap.ui.define([
 				return null;
 			}
 
-			var iBooked = (oData.assignments || []).reduce(function (iTotal, oAssignment) {
-				return iTotal + (oAssignment.TimeEntries || []).reduce(function (iSum, oEntry) {
-					return iSum + Backend.toMinutes(oEntry.Hours);
-				}, 0);
+			var iBooked = this._timeEntries(oData).reduce(function (iTotal, oItem) {
+				return iTotal + Backend.toMinutes(oItem.entry.Hours);
 			}, 0);
 
 			var iTarget = Backend.toMinutes(oData.user.targetHrsPerWeek);
@@ -428,17 +428,10 @@ sap.ui.define([
 			var oModel = this.getModel();
 			var aStrip = [];
 
-			if (this._oWeekTotals) {
-				aStrip.push(this._oWeekTotals.booked >= this._oWeekTotals.target ? {
-					text: this.getText("stripTimesheetOnTrack"),
-					state: "Success"
-				} : {
-					text: this.getText("stripTimesheetShort", [
-						Backend.fromMinutes(this._oWeekTotals.target - this._oWeekTotals.booked)
-					]),
-					state: "Warning"
-				});
-			}
+			// The hours still to book used to lead this strip. They are the week's own
+			// figure, so they are shown on the Timesheet card with the week they
+			// describe - see _weekStatus - rather than beside the page title, where
+			// nothing said which week or which timesheet they referred to.
 
 			// One pill per person waiting, not per day, so it lines up with the
 			// approvals card on the home page.
@@ -463,18 +456,58 @@ sap.ui.define([
 		},
 
 		/**
+		 * @param {object|null} oTotals the week's booked and target minutes
+		 * @returns {object} the pill on the Timesheet card: what is still to book, or
+		 * that the week is on track - empty when there is no week to judge
+		 */
+		_weekStatus: function (oTotals) {
+			if (!oTotals) {
+				return { text: "", state: "None" };
+			}
+			if (oTotals.booked >= oTotals.target) {
+				return { text: this.getText("stripTimesheetOnTrack"), state: "Success" };
+			}
+			return {
+				text: this.getText("stripTimesheetShort", [Backend.fromMinutes(oTotals.target - oTotals.booked)]),
+				state: "Warning"
+			};
+		},
+
+		/**
 		 * @param {object} oData a timesheet response
 		 * @param {string} sDate the day as yyyy-MM-dd
 		 * @returns {number} the minutes booked on that day
 		 */
 		_bookedMinutes: function (oData, sDate) {
-			return (oData.assignments || []).reduce(function (iTotal, oAssignment) {
-				return iTotal + (oAssignment.TimeEntries || []).filter(function (oEntry) {
-					return Backend.dayKey(oEntry.Date) === sDate;
-				}).reduce(function (iSum, oEntry) {
-					return iSum + Backend.toMinutes(oEntry.Hours);
-				}, 0);
+			return this._timeEntries(oData).filter(function (oItem) {
+				return Backend.dayKey(oItem.entry.Date) === sDate;
+			}).reduce(function (iTotal, oItem) {
+				return iTotal + Backend.toMinutes(oItem.entry.Hours);
 			}, 0);
+		},
+
+		/**
+		 * The week's time entries, one per project per day - as My Timesheet shows them.
+		 * A project can come back on more than one assignment row, and each of those rows
+		 * carries the project's entries, so adding up every row's entries counted that
+		 * project's time once per row. Keyed the way the grid's _buildRows is, where a
+		 * later row's entry for the same day replaces an earlier one.
+		 * @param {object} oData a timesheet response
+		 * @returns {Array<{assignment: object, entry: object}>} each entry with the row it came on
+		 */
+		_timeEntries: function (oData) {
+			var mEntries = {};
+			(oData.assignments || []).forEach(function (oAssignment) {
+				(oAssignment.TimeEntries || []).forEach(function (oEntry) {
+					mEntries[oAssignment.ProjectID + "|" + Backend.dayKey(oEntry.Date)] = {
+						assignment: oAssignment,
+						entry: oEntry
+					};
+				});
+			});
+			return Object.keys(mEntries).map(function (sKey) {
+				return mEntries[sKey];
+			});
 		},
 
 		/**
@@ -524,24 +557,25 @@ sap.ui.define([
 							label: (oAssignment.ClientDesc || "") + " — " + oAssignment.ProjectDesc
 						});
 					}
+				});
 
-					(oAssignment.TimeEntries || []).forEach(function (oEntry) {
-						if (Backend.dayKey(oEntry.Date) !== sDay) {
-							return;
-						}
-						var sHours = this._trimSeconds(oEntry.Hours);
-						if (!sHours || sHours === "00:00") {
-							return;
-						}
-						iBooked += Backend.toMinutes(sHours);
-						aEntries.push({
-							ProjectID: oAssignment.ProjectID,
-							project: oAssignment.ProjectDesc,
-							time: sHours,
-							comment: formatter.clean(oEntry.Comment),
-							recId: oEntry.RecID || ""
-						});
-					}, this);
+				this._timeEntries(oData).forEach(function (oItem) {
+					var oEntry = oItem.entry;
+					if (Backend.dayKey(oEntry.Date) !== sDay) {
+						return;
+					}
+					var sHours = this._trimSeconds(oEntry.Hours);
+					if (!sHours || sHours === "00:00") {
+						return;
+					}
+					iBooked += Backend.toMinutes(sHours);
+					aEntries.push({
+						ProjectID: oItem.assignment.ProjectID,
+						project: oItem.assignment.ProjectDesc,
+						time: sHours,
+						comment: formatter.clean(oEntry.Comment),
+						recId: oEntry.RecID || ""
+					});
 				}, this);
 
 				aProjects.sort(function (a, b) {
@@ -1024,7 +1058,7 @@ sap.ui.define([
 				approvals: [],
 				quickLeave: this._emptyQuickLeave(),
 				quick: this._emptyQuickEntry(),
-				week: { label: "" },
+				week: { label: "", status: { text: "", state: "None" } },
 				weekRings: []
 			};
 		},
