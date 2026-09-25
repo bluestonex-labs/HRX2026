@@ -396,10 +396,8 @@ sap.ui.define([
 				return null;
 			}
 
-			var iBooked = (oData.assignments || []).reduce(function (iTotal, oAssignment) {
-				return iTotal + (oAssignment.TimeEntries || []).reduce(function (iSum, oEntry) {
-					return iSum + Backend.toMinutes(oEntry.Hours);
-				}, 0);
+			var iBooked = this._timeEntries(oData).reduce(function (iTotal, oItem) {
+				return iTotal + Backend.toMinutes(oItem.entry.Hours);
 			}, 0);
 
 			var iTarget = Backend.toMinutes(oData.user.targetHrsPerWeek);
@@ -481,13 +479,35 @@ sap.ui.define([
 		 * @returns {number} the minutes booked on that day
 		 */
 		_bookedMinutes: function (oData, sDate) {
-			return (oData.assignments || []).reduce(function (iTotal, oAssignment) {
-				return iTotal + (oAssignment.TimeEntries || []).filter(function (oEntry) {
-					return Backend.dayKey(oEntry.Date) === sDate;
-				}).reduce(function (iSum, oEntry) {
-					return iSum + Backend.toMinutes(oEntry.Hours);
-				}, 0);
+			return this._timeEntries(oData).filter(function (oItem) {
+				return Backend.dayKey(oItem.entry.Date) === sDate;
+			}).reduce(function (iTotal, oItem) {
+				return iTotal + Backend.toMinutes(oItem.entry.Hours);
 			}, 0);
+		},
+
+		/**
+		 * The week's time entries, one per project per day - as My Timesheet shows them.
+		 * A project can come back on more than one assignment row, and each of those rows
+		 * carries the project's entries, so adding up every row's entries counted that
+		 * project's time once per row. Keyed the way the grid's _buildRows is, where a
+		 * later row's entry for the same day replaces an earlier one.
+		 * @param {object} oData a timesheet response
+		 * @returns {Array<{assignment: object, entry: object}>} each entry with the row it came on
+		 */
+		_timeEntries: function (oData) {
+			var mEntries = {};
+			(oData.assignments || []).forEach(function (oAssignment) {
+				(oAssignment.TimeEntries || []).forEach(function (oEntry) {
+					mEntries[oAssignment.ProjectID + "|" + Backend.dayKey(oEntry.Date)] = {
+						assignment: oAssignment,
+						entry: oEntry
+					};
+				});
+			});
+			return Object.keys(mEntries).map(function (sKey) {
+				return mEntries[sKey];
+			});
 		},
 
 		/**
@@ -537,24 +557,25 @@ sap.ui.define([
 							label: (oAssignment.ClientDesc || "") + " — " + oAssignment.ProjectDesc
 						});
 					}
+				});
 
-					(oAssignment.TimeEntries || []).forEach(function (oEntry) {
-						if (Backend.dayKey(oEntry.Date) !== sDay) {
-							return;
-						}
-						var sHours = this._trimSeconds(oEntry.Hours);
-						if (!sHours || sHours === "00:00") {
-							return;
-						}
-						iBooked += Backend.toMinutes(sHours);
-						aEntries.push({
-							ProjectID: oAssignment.ProjectID,
-							project: oAssignment.ProjectDesc,
-							time: sHours,
-							comment: formatter.clean(oEntry.Comment),
-							recId: oEntry.RecID || ""
-						});
-					}, this);
+				this._timeEntries(oData).forEach(function (oItem) {
+					var oEntry = oItem.entry;
+					if (Backend.dayKey(oEntry.Date) !== sDay) {
+						return;
+					}
+					var sHours = this._trimSeconds(oEntry.Hours);
+					if (!sHours || sHours === "00:00") {
+						return;
+					}
+					iBooked += Backend.toMinutes(sHours);
+					aEntries.push({
+						ProjectID: oItem.assignment.ProjectID,
+						project: oItem.assignment.ProjectDesc,
+						time: sHours,
+						comment: formatter.clean(oEntry.Comment),
+						recId: oEntry.RecID || ""
+					});
 				}, this);
 
 				aProjects.sort(function (a, b) {
