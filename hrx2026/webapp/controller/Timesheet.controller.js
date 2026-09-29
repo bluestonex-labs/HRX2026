@@ -855,14 +855,30 @@ sap.ui.define([
 
 			oViewModel.setProperty("/saving", true);
 
-			this._getJson(TIMESHEET_SERVICE + "?cmd=fetchAssignments&" + new URLSearchParams({
-				Email: oViewModel.getProperty("/currentEmail"),
-				// smail,
-				FromDate: this._isoDate(aDates[0]),
-				ToDate: this._isoDate(aDates[6]),
-				OrgID: this._sOrgId
-				// sorgid
-			}).toString()).then(function (oData) {
+			Promise.all([
+				this._getJson(TIMESHEET_SERVICE + "?cmd=fetchAssignments&" + new URLSearchParams({
+					Email: oViewModel.getProperty("/currentEmail"),
+					// smail,
+					FromDate: this._isoDate(aDates[0]),
+					ToDate: this._isoDate(aDates[6]),
+					OrgID: this._sOrgId
+					// sorgid
+				}).toString()),
+				// The assignments carry no word on whether the project itself is still
+				// running, so that comes from the project records. Without them the list
+				// is still offered, only unfiltered, rather than not at all.
+				this._read("/ProjectsData", {
+					urlParameters: { "$select": "ProjectKey,StartDate,EndDate,IsTimeBookingAllowed" },
+					filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)]
+				}).then(this._strip.bind(this), function () {
+					return null;
+				})
+			]).then(function (aResults) {
+				var oData = aResults[0];
+				var mProjects = aResults[1] && aResults[1].reduce(function (mMap, oProject) {
+					mMap[oProject.ProjectKey] = oProject;
+					return mMap;
+				}, {});
 				var aExisting = (this.getModel("ts").getProperty("/rows") || []).map(function (oRow) {
 					return oRow.ProjectID;
 				});
@@ -872,9 +888,12 @@ sap.ui.define([
 					if (aExisting.indexOf(oAssignment.ProjectID) !== -1 || mSeen[oAssignment.ProjectID]) {
 						return false;
 					}
+					if (!this._isActiveProject(oAssignment, mProjects && mProjects[oAssignment.ProjectID], aDates)) {
+						return false;
+					}
 					mSeen[oAssignment.ProjectID] = true;
 					return true;
-				}).sort(function (a, b) {
+				}, this).sort(function (a, b) {
 					return (a.ProjectDesc || "").localeCompare(b.ProjectDesc || "");
 				});
 
@@ -885,6 +904,36 @@ sap.ui.define([
 				oViewModel.setProperty("/saving", false);
 				this._showError("tsErrorAssignments", oError);
 			}.bind(this));
+		},
+
+		/**
+		 * A project can be booked to in a week while the assignment is active, the
+		 * project still takes time bookings, and the week falls between the project's
+		 * start and end. A project that has ended stays off the list, even though the
+		 * assignment to it was never closed.
+		 * @param {object} oAssignment the user's assignment to the project
+		 * @param {object} [oProject] the project's own record, when it could be read
+		 * @param {Array<Date>} aDates the seven days of the week on screen
+		 * @returns {boolean} true when the project can be offered for that week
+		 */
+		_isActiveProject: function (oAssignment, oProject, aDates) {
+			if (oAssignment.IsActive === "N") {
+				return false;
+			}
+			if (!oProject) {
+				return true;
+			}
+
+			// Edm.DateTime arrives as midnight UTC, so the day is read in UTC.
+			var fnDay = function (oDate) {
+				return oDate instanceof Date ? oDate.toISOString().slice(0, 10) : "";
+			};
+			var sStart = fnDay(oProject.StartDate);
+			var sEnd = fnDay(oProject.EndDate);
+
+			return oProject.IsTimeBookingAllowed === "Y" &&
+				(!sStart || sStart <= this._isoDate(aDates[6])) &&
+				(!sEnd || sEnd >= this._isoDate(aDates[0]));
 		},
 
 		onCancelAddProjects: function () {
