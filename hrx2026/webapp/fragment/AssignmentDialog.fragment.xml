@@ -32,11 +32,11 @@
 					<ComboBox
 						id="assignmentResource"
 						selectedKey="{mpForm>/EmpID}"
-						items="{mp>/managers}"
+						items="{mpForm>/resources}"
 						showSecondaryValues="true"
 						enabled="{= ${mpForm>/mode} !== 'edit' }"
 						placeholder="{i18n>mpFieldResourcePlaceholder}">
-						<core:ListItem key="{mp>EmpID}" text="{mp>FullName}" additionalText="{mp>EmpID}" />
+						<core:ListItem key="{mpForm>EmpID}" text="{mpForm>FullName}" additionalText="{mpForm>EmpID}" />
 					</ComboBox>
 
 					<Label text="{i18n>mpFieldBillingScheme}" required="true" />
