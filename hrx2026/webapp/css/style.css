@@ -389,10 +389,9 @@ body.hrxApp {
 	left: 14px;
 }
 
+/* A bare glyph on the rail, with no box of its own around it. */
 .hrxToolPage .hrxNavToggle .sapMBtnInner {
-	border: 1px solid rgba(255, 255, 255, .14);
 	border-radius: var(--radius-s);
-	background: rgba(255, 255, 255, .06);
 	color: #E6F0F5;
 	height: 38px;
 	min-width: 38px;
@@ -713,9 +712,11 @@ body.hrxApp {
 
 /* ── BUTTONS ──────────────────────────────────────────────────────────────── */
 
+/* Each button type keeps the theme's own border colour: one grey line for all of
+   them had put a border round Transparent, Accept and Reject buttons, which have
+   none of their own. */
 .hrxApp .sapMBtn .sapMBtnInner {
 	border-radius: var(--radius-s);
-	border-color: var(--line);
 }
 
 .hrxApp .sapMBtn .sapMBtnContent,
