@@ -555,13 +555,28 @@ sap.ui.define([
 
 			this._iWeekTargetMinutes = Math.max(iTargetMinutes, 0);
 
+			// The service sends the days unrounded (2.1666...), so they are shown to at
+			// most two decimal places. The state and the utilisation above still work
+			// from the exact figures.
 			oViewModel.setProperty("/kpis", {
-				targetDays: fTargetDays,
-				actualDays: fActualDays,
+				targetDays: this._roundTo2(fTargetDays),
+				actualDays: this._roundTo2(fActualDays),
 				actualState: fActualDays >= fTargetDays ? "Good" : "Critical",
 				utilisation: fUtilisation,
 				month: aDates[0].toLocaleDateString("en-GB", { month: "long", year: "numeric" })
 			});
+		},
+
+		/**
+		 * Rounds half up to two decimal places. Shifting by exponent rather than
+		 * multiplying by 100 keeps 2.125 at 2.13: 2.125 * 100 is 212.49999999999997.
+		 * @param {number} fValue the figure
+		 * @returns {number} the figure to at most two decimal places
+		 */
+		_roundTo2: function (fValue) {
+			var fRounded = Number(Math.round(fValue + "e2") + "e-2");
+			// A figure already in exponent form (1e-7) does not take the shift.
+			return isFinite(fRounded) ? fRounded : Math.round(fValue * 100) / 100;
 		},
 
 		/**
