@@ -534,8 +534,17 @@ sap.ui.define([
 		/* =========================================================== */
 
 		onAddAssignment: function () {
+			// Somebody already on the project is edited from their row, not assigned a
+			// second time, so the picker only offers the people who are not on it yet.
+			var aAssigned = (this.getModel("mpTabs").getProperty("/assignments") || []).map(function (oAssignment) {
+				return oAssignment.EmpID;
+			});
+
 			this.getModel("mpForm").setData({
 				mode: "new",
+				resources: (this.getModel("mp").getProperty("/managers") || []).filter(function (oResource) {
+					return aAssigned.indexOf(oResource.EmpID) === -1;
+				}),
 				AssignmentID: "",
 				EmpID: "",
 				BillingID: "",
@@ -553,6 +562,9 @@ sap.ui.define([
 
 			this.getModel("mpForm").setData({
 				mode: "edit",
+				// The picker is locked on an edit, but it still has to hold the person
+				// being edited to show their name.
+				resources: this.getModel("mp").getProperty("/managers") || [],
 				AssignmentID: oAssignment.ASSIGNMENTID,
 				EmpID: oAssignment.EmpID,
 				BillingID: oAssignment.BillingID || "",
@@ -687,6 +699,9 @@ sap.ui.define([
 
 			this.getModel("mpForm").setData({
 				mode: "edit",
+				// The picker is locked on an edit, but it still has to hold the person
+				// being edited to show their name.
+				resources: this.getModel("mp").getProperty("/managers") || [],
 				AssignmentID: oUser.AssignmentID,
 				UserID: oUser.UserID,
 				UserName: ((oUser.FName || "") + " " + (oUser.LName || "")).trim(),

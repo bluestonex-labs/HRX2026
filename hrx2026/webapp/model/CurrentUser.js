@@ -22,6 +22,23 @@ sap.ui.define([
 		return (oParameters[sName] && oParameters[sName].length && oParameters[sName][0]) || "";
 	}
 
+	// Tia and Vicky run resourcing and payroll without line reports of their own, so
+	// the team service does not flag them as managers - but they need everything a
+	// manager has, Admin and every app under it included. They count as managers
+	// whatever the service says.
+	var MANAGER_EXCEPTIONS = [
+		"tia.menhennet@bluestonex.com",
+		"vicky.williams@bluestonex.com"
+	];
+
+	/**
+	 * @param {string} sEmail an email, in any case
+	 * @returns {boolean} true when that person is treated as a manager regardless of the service's flag
+	 */
+	function isManagerException(sEmail) {
+		return MANAGER_EXCEPTIONS.indexOf((sEmail || "").toLowerCase()) !== -1;
+	}
+
 	// A Business Application Studio workspace previews the app on a host of its own.
 	// Deployments live on hana.ondemand.com, so this never matches one.
 	var BAS_HOST_SUFFIX = ".applicationstudio.cloud.sap";
@@ -45,6 +62,8 @@ sap.ui.define([
 	}
 
 	return {
+
+		isManagerException: isManagerException,
 
 		/**
 		 * Only meaningful once {@link load} has resolved - before that, there is no
@@ -169,7 +188,7 @@ sap.ui.define([
 							return sPart.charAt(0).toUpperCase();
 						}).slice(0, 2).join(""),
 						siteID: oUser.SiteID || "",
-						isManager: oUser.IsManager === "Y",
+						isManager: oUser.IsManager === "Y" || isManagerException(sEmail),
 						hasPendingLeave: oUser.HasPendingLeaves === "Y"
 					};
 					return oProfile;
@@ -187,7 +206,7 @@ sap.ui.define([
 						name: sEmail,
 						initials: sEmail.charAt(0).toUpperCase(),
 						siteID: "",
-						isManager: false,
+						isManager: isManagerException(sEmail),
 						hasPendingLeave: false
 					};
 					return oProfile;

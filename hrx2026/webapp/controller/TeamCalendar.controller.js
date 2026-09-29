@@ -266,7 +266,8 @@ sap.ui.define([
 
 				oViewModel.setProperty("/currentName", oUser.Name || "");
 				oViewModel.setProperty("/currentEmpId", oUser.EmpID || "");
-				oViewModel.setProperty("/isManager", oUser.IsManager === "Y");
+				oViewModel.setProperty("/isManager", oUser.IsManager === "Y" ||
+					CurrentUser.isManagerException(oViewModel.getProperty("/currentEmail")));
 				oViewModel.setProperty("/hasPendingLeave", oUser.HasPendingLeaves === "Y");
 
 				this.getModel("tc").setProperty("/allPeople", (oData.users || []).map(this._toRow, this));
