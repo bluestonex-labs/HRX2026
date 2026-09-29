@@ -28,12 +28,11 @@
 					id="timesheetViewAs"
 					selectedKey="{tsView>/currentEmail}"
 					items="{ts>/directory}"
-					showSecondaryValues="true"
 					width="15rem"
 					change=".onViewAsChange"
 					selectionChange=".onViewAsChange"
 					placeholder="{i18n>tsViewingAsPlaceholder}">
-					<core:ListItem key="{ts>Email}" text="{ts>FullName}" additionalText="{ts>EmpID}" />
+					<core:ListItem key="{ts>Email}" text="{ts>FullName}" />
 				</ComboBox>
 			</HBox>
 
