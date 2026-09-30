@@ -124,13 +124,20 @@
 							<Label text="{i18n>fieldApprover}" />
 							<Text text="{mlView>/user/managerName}" class="sapUiSmallMarginBottom hrxResourceName" />
 
+							<!-- At the foot of the card, as on the home page's Quick Leave card:
+							     the class goes on the flex item wrapper, where margin-top:auto
+							     can push it down (see hrxCardFooterButton). -->
 							<Button
 								id="leaveSubmit"
 								text="{i18n>btnRequestLeave}"
 								type="Emphasized"
 								width="100%"
 								enabled="{= ${mlForm>/NoOfDays} > 0 }"
-								press=".onSubmitLeave" />
+								press=".onSubmitLeave">
+								<layoutData>
+									<FlexItemData styleClass="hrxCardFooterButton" />
+								</layoutData>
+							</Button>
 						</VBox>
 					</f:content>
 				</f:Card>
