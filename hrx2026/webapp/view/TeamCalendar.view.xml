@@ -12,7 +12,7 @@
 	<Page id="teamCalPage" showHeader="false" title="{i18n>teamCalendarTitle}" showNavButton="false" class="hrxPageContent">
 
 		<subHeader>
-			<OverflowToolbar id="teamCalToolbar" class="hrxFilterBar">
+			<OverflowToolbar id="teamCalToolbar" class="hrxFilterBar sapUiSmallMarginBottom">
 				<!-- Only a manager may look at somebody else's calendar -->
 				<Label
 					text="{i18n>tcViewingAs}"
