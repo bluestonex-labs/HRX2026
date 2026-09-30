@@ -494,9 +494,37 @@ body.hrxApp {
 	padding-right: 0;
 }
 
+/* The page's own colour rather than none: the sub-header stays put while the
+   content scrolls beneath it, and with no background the calendar showed through
+   behind the filters. Painted like the page, it reads as no strip at all. */
 .hrxApp .sapMPage > .sapMPageSubHeader:has(.hrxFilterBar) {
-	background: transparent;
+	background: var(--sapBackgroundColor);
 	box-shadow: none;
+}
+
+/* sap.m.Page gives the sub-header a fixed height and starts the content at a
+   fixed offset, so a margin under the filter bar has nowhere to open up - the
+   content began flush with the bar's bottom edge whatever the margin said. The
+   content starts one gutter up behind the bar (the page's own top padding); this
+   adds the bar's small bottom margin (1rem) to the section's gutter, so the gap
+   is really there. !important because the gutter itself is set that way. */
+.hrxApp .sapMPage > .sapMPageSubHeader:has(> .hrxFilterBar.sapUiSmallMarginBottom) ~ section {
+	padding-top: calc(var(--gutter) + 1rem) !important;
+}
+
+/* The calendar's header is sticky, and sticks to the top of that padding rather
+   than to the bar - so as the rows scroll up they pass through the 1rem between
+   the two, which is the calendar showing through the filter row again. The bar's
+   page-coloured background is carried down over that margin. */
+.hrxApp .sapMPage > .sapMPageSubHeader:has(> .hrxFilterBar.sapUiSmallMarginBottom)::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 100%;
+	height: 1rem;
+	background: var(--sapBackgroundColor);
+	pointer-events: none;
 }
 
 /* The theme draws the sub-header's separator line and its drop shadow on this
@@ -780,11 +808,29 @@ body.hrxApp {
 /* ── INPUTS ───────────────────────────────────────────────────────────────── */
 
 .hrxApp .sapMInputBaseContentWrapper,
-.hrxApp .sapMSltInner,
 .hrxApp .sapMTextArea {
 	border-radius: var(--radius-s);
 	border-color: var(--line);
 	background: var(--surface);
+}
+
+/* A Select draws its box on the control itself, not on an inner wrapper - this
+   rule used to name .sapMSltInner, which UI5 no longer renders, so every Select
+   kept the theme's square corners and darker outline beside the rounded inputs
+   (Staff beside Filter resources on Team Calendar). The outline is the one the
+   theme gives the inputs' content wrapper. */
+.hrxApp .sapMSlt {
+	border-radius: var(--radius-s);
+	background: var(--surface);
+	box-shadow: inset 0 0 0 1px rgba(85, 107, 129, .25);
+}
+
+.hrxApp .sapMSlt.sapMSltHoverable:hover {
+	box-shadow: inset 0 0 0 1px var(--ice);
+}
+
+.hrxApp .sapMSlt.sapMSltFocused {
+	box-shadow: inset 0 0 0 1px var(--ice);
 }
 
 .hrxApp .sapMInputBaseContentWrapper:hover {
