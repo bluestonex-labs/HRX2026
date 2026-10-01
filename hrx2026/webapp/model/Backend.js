@@ -108,15 +108,18 @@ sap.ui.define([], function () {
 		 * @param {object} [mParameters] read parameters (filters, urlParameters, ...)
 		 * @returns {Promise<object>} the response
 		 */
-		read: function (oModel, sPath, mParameters) {
+		read: function (oModel, sPath, mParameters, bOptional) {
 			var fnRead = function () {
+				if (bOptional && !this.hasEntitySet(oModel, sPath)) {
+					return Promise.resolve({ results: [] });
+				}
 				return new Promise(function (resolve, reject) {
 					oModel.read(sPath, Object.assign({}, mParameters, {
 						success: resolve,
 						error: reject
 					}));
 				});
-			};
+			}.bind(this);
 
 			return oModel.metadataLoaded().then(fnRead, function () {
 				// The first metadata attempt failed. Component.js is already retrying
@@ -138,6 +141,42 @@ sap.ui.define([], function () {
 						bSettled = true;
 						clearTimeout(iTimer);
 						fnRead().then(resolve, reject);
+					});
+				});
+			});
+		},
+
+		/**
+		 * As {@link read}, for an entity set not every backend has. The project areas
+		 * (Task, Proj_Task_Assign_Text) are missing from some systems' services
+		 * altogether - the demo one among them - and reading one there is a 404 that
+		 * took every other value help on the page down with it. Where the service
+		 * has no such set this resolves with no rows, without a request; where it
+		 * has one, a failure is still reported as usual.
+		 * @param {sap.ui.model.odata.v2.ODataModel} oModel the OData model
+		 * @param {string} sPath the entity set path
+		 * @param {object} [mParameters] read parameters (filters, urlParameters, ...)
+		 * @returns {Promise<object>} the response, or { results: [] }
+		 */
+		readOptional: function (oModel, sPath, mParameters) {
+			return this.read(oModel, sPath, mParameters, true);
+		},
+
+		/**
+		 * Only meaningful once the service metadata has loaded.
+		 * @param {sap.ui.model.odata.v2.ODataModel} oModel the OData model
+		 * @param {string} sPath an entity set path, e.g. "/Task" or "/Task('x')"
+		 * @returns {boolean} true when the service has that entity set
+		 */
+		hasEntitySet: function (oModel, sPath) {
+			var sName = String(sPath).replace(/^\//, "").split(/[(/]/)[0];
+			var oMetadata = oModel.getServiceMetadata && oModel.getServiceMetadata();
+			var aSchemas = (oMetadata && oMetadata.dataServices && oMetadata.dataServices.schema) || [];
+
+			return aSchemas.some(function (oSchema) {
+				return (oSchema.entityContainer || []).some(function (oContainer) {
+					return (oContainer.entitySet || []).some(function (oSet) {
+						return oSet.name === sName;
 					});
 				});
 			});
