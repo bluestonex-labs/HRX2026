@@ -62,7 +62,9 @@ sap.ui.define([
 				priorities: [],
 				managers: [],
 				billing: [],
-				tasks: []
+				tasks: [],
+				// Whether the backend has project areas at all - see _loadLookups.
+				tasksAvailable: true
 			}), "mp");
 
 			this.setModel(new JSONModel({}), "mpDetail");
@@ -104,8 +106,13 @@ sap.ui.define([
 					filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)]
 				}),
 				this._read("/PredefinedBilling", { filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)] }),
-				this._read("/Task")
+				// Optional: some systems' services have no project areas at all, and a
+				// 404 on this one used to fail every value help on the page with it.
+				this._readOptional("/Task")
 			]).then(function (aResults) {
+				oModel.setProperty("/tasksAvailable",
+					Backend.hasEntitySet(this.getOwnerComponent().getModel(), "/Task"));
+
 				var aClients = this._strip(aResults[0]).sort(function (a, b) {
 					return (a.ClientDesc || "").localeCompare(b.ClientDesc || "");
 				});
@@ -209,7 +216,7 @@ sap.ui.define([
 						ProjectKey: oKeys.ProjectKey,
 						ClientKey: oKeys.ClientKey
 					})),
-					this._read("/Proj_Task_Assign_Text", {
+					this._readOptional("/Proj_Task_Assign_Text", {
 						filters: [new Filter("ProjectKey", FilterOperator.EQ, oKeys.ProjectKey)]
 					})
 				]);
@@ -917,6 +924,16 @@ sap.ui.define([
 			// a momentary outage at startup no longer leaves every value help on the
 			// page empty for the rest of the session.
 			return Backend.read(this.getOwnerComponent().getModel(), sPath, mParameters);
+		},
+
+		/**
+		 * For an entity set the backend may not have - see Backend.readOptional.
+		 * @param {string} sPath the entity set path
+		 * @param {object} [mParameters] read parameters
+		 * @returns {Promise<object>} the response, or no rows when the set is absent
+		 */
+		_readOptional: function (sPath, mParameters) {
+			return Backend.readOptional(this.getOwnerComponent().getModel(), sPath, mParameters);
 		},
 
 		_getJson: function (sUrl) {

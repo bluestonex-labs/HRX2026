@@ -214,9 +214,10 @@
 											<core:ListItem key="{mp>EmpID}" text="{mp>FullName}" additionalText="{mp>EmpID}" />
 										</ComboBox>
 
-										<Label text="{i18n>mpFieldAreas}" />
+										<Label text="{i18n>mpFieldAreas}" visible="{mp>/tasksAvailable}" />
 										<MultiComboBox
 											id="projectAreas"
+											visible="{mp>/tasksAvailable}"
 											selectedKeys="{mpDetail>/taskKeys}"
 											items="{mp>/tasks}"
 											placeholder="{i18n>mpFieldAreasPlaceholder}">

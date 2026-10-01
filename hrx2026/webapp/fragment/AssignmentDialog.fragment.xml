@@ -62,9 +62,10 @@
 					<Label text="{i18n>mpFieldStartDate}" />
 					<DatePicker id="assignmentStartDate" dateValue="{mpForm>/StartDate}" valueFormat="yyyy-MM-dd" />
 
-					<Label text="{i18n>mpFieldAreas}" />
+					<Label text="{i18n>mpFieldAreas}" visible="{mp>/tasksAvailable}" />
 					<MultiComboBox
 						id="assignmentAreas"
+						visible="{mp>/tasksAvailable}"
 						selectedKeys="{mpForm>/taskKeys}"
 						items="{mpDetail>/projectTasks}"
 						placeholder="{i18n>mpFieldAssignmentAreasPlaceholder}">
