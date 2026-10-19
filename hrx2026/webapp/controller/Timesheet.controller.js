@@ -38,12 +38,13 @@ sap.ui.define([
 	var GRACE_WORKING_DAYS = 3;
 
 	// The "viewing as" picker normally offers a manager their own direct reports.
-	// These three run resourcing and payroll, so they need every timesheet in the
-	// organisation regardless of who reports to whom.
+	// These people need every timesheet in the organisation regardless of who
+	// reports to whom.
 	var TIMESHEET_ALL_ACCESS = [
 		"tina.porter@bluestonex.com",
 		"tia.menhennet@bluestonex.com",
-		"vicky.williams@bluestonex.com"
+		"vicky.williams@bluestonex.com",
+		"dan.barton@bluestonex.com"
 	];
 
 	return Controller.extend("bsx.hrx.hrx2026.controller.Timesheet", {
