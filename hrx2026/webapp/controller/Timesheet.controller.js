@@ -255,6 +255,7 @@ sap.ui.define([
 					oViewModel.setProperty("/isManager", oUser.isManager === "Y" || this._seesEveryone());
 				}
 				this._oWorkSchedule = aResults[1];
+				this._iDayMinutes = this._dayMinutes(oUser);
 				this._oNonWorkingDates = this._nonWorkingDates(oData);
 
 				this.getModel("ts").setProperty("/rows",
@@ -285,12 +286,13 @@ sap.ui.define([
 
 			return this._read("/Resources", {
 				urlParameters: { "$select": "Email," + DAYS.map(function (oDay) { return oDay.abbrev; }).join(",") },
-				filters: [
-					new Filter("OrgID", FilterOperator.EQ, this._sOrgId),
-					new Filter("Email", FilterOperator.EQ, sEmail)
-				]
+				// Matched below rather than filtered on Email here: that filter is
+				// case-sensitive, and an email stored with capitals matched nobody.
+				filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)]
 			}).then(function (oData) {
-				var oResource = this._strip(oData)[0];
+				var oResource = this._strip(oData).filter(function (oRow) {
+					return CurrentUser.sameEmail(oRow.Email, sEmail);
+				})[0];
 				if (!oResource) {
 					return null;
 				}
@@ -452,6 +454,7 @@ sap.ui.define([
 
 		_buildDays: function (aDates) {
 			var mNonWorkingDates = this._oNonWorkingDates || {};
+			var iDayMinutes = this._iDayMinutes;
 
 			return DAYS.map(function (oDay, iIndex) {
 				var oDate = aDates[iIndex];
@@ -467,8 +470,11 @@ sap.ui.define([
 					working: this._isWorkingDay(oDay.schedule),
 					// A project row's own cell is locked on any day that is fully covered by
 					// leave or a bank holiday, same as the dedicated absence rows, and on any
-					// day the user's work schedule doesn't flag "Y".
-					editable: this._isWorkingDay(oDay.schedule) && this._isOpenForBooking(oDate) && !mNonWorkingDates[sIsoDate]
+					// day the user's work schedule doesn't flag "Y". It used to lock on any
+					// leave at all, which left a half day's other half unbookable. With no
+					// weekly target to measure against, any leave still closes the day.
+					editable: this._isWorkingDay(oDay.schedule) && this._isOpenForBooking(oDate) &&
+						!(mNonWorkingDates[sIsoDate] && mNonWorkingDates[sIsoDate] >= (iDayMinutes || mNonWorkingDates[sIsoDate]))
 				};
 			}, this);
 		},
@@ -480,11 +486,26 @@ sap.ui.define([
 		_nonWorkingDates: function (oData) {
 			var mDates = {};
 
+			// Summed per day, so a half day's leave is four hours of the day rather
+			// than the whole of it - see _buildDays.
 			Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
-				mDates[Backend.dayKey(oEntry.Date)] = true;
+				var sDate = Backend.dayKey(oEntry.Date);
+				mDates[sDate] = (mDates[sDate] || 0) + Backend.toMinutes(oEntry.Hours);
 			});
 
 			return mDates;
+		},
+
+		/**
+		 * @param {object} oUser the user block of the timesheet response
+		 * @returns {number} the minutes owed on a working day: the week's target spread
+		 * over the days the work schedule has the user working
+		 */
+		_dayMinutes: function (oUser) {
+			var iWorkingDays = DAYS.filter(function (oDay) {
+				return this._isWorkingDay(oDay.schedule);
+			}, this).length || 5;
+			return Math.round(this._toMinutes((oUser || {}).targetHrsPerWeek) / iWorkingDays);
 		},
 
 		/**

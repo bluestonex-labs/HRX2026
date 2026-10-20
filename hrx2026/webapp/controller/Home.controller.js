@@ -213,27 +213,68 @@ sap.ui.define([
 				// approuter session. Every resource has a real email, so this query
 				// would only ever come back empty; skip it rather than send a doomed
 				// request that can take the rest of the batch down with it.
-				this._oWorkSchedule = {};
+				this._oWorkSchedule = this._defaultSchedule();
 				return Promise.resolve();
 			}
 
+			// The org's resources are read and matched here, not filtered on Email in
+			// the request: that filter is case-sensitive, and an email stored with
+			// capitals (Soumya.Sharma@...) matched nobody. With no schedule every day,
+			// weekends included, counted as a working day, so a 40-hour week owed 5:43 a
+			// day and an 8-hour day read 140%.
 			return Backend.read(this.getOwnerComponent().getModel(), "/Resources", {
 				urlParameters: { "$select": "Email," + DAYS.map(function (oDay) { return oDay.abbrev; }).join(",") },
-				filters: [
-					new Filter("OrgID", FilterOperator.EQ, this._sOrgId),
-					new Filter("Email", FilterOperator.EQ, sEmail)
-				]
+				filters: [new Filter("OrgID", FilterOperator.EQ, this._sOrgId)]
 			}).then(function (oData) {
-				var oResource = (oData.results || [])[0];
-				this._oWorkSchedule = DAYS.reduce(function (oSchedule, oDay) {
-					oSchedule[oDay.schedule] = oResource && oResource[oDay.abbrev];
+				var oResource = (oData.results || []).filter(function (oRow) {
+					return CurrentUser.sameEmail(oRow.Email, sEmail);
+				})[0];
+				this._oWorkSchedule = oResource ? DAYS.reduce(function (oSchedule, oDay) {
+					oSchedule[oDay.schedule] = oResource[oDay.abbrev];
 					return oSchedule;
-				}, {});
+				}, {}) : this._defaultSchedule();
 			}.bind(this)).catch(function () {
-				// A resource that isn't found, or a service hiccup, falls back to every day
-				// being treated as working in _loadWeek/_loadDay rather than blocking them.
-				this._oWorkSchedule = {};
+				// A service hiccup falls back to Monday to Friday, as My Timesheet does,
+				// rather than blocking the page.
+				this._oWorkSchedule = this._defaultSchedule();
 			}.bind(this));
+		},
+
+		/**
+		 * @returns {object} Monday to Friday, for a user whose schedule is not on record
+		 */
+		_defaultSchedule: function () {
+			return DAYS.reduce(function (oSchedule, oDay, iIndex) {
+				oSchedule[oDay.schedule] = iIndex < 5 ? "Y" : "N";
+				return oSchedule;
+			}, {});
+		},
+
+		/**
+		 * @param {object} oUser the user block of a timesheet response
+		 * @returns {number} the minutes owed on a working day: the week's target spread
+		 * over the days the work schedule has them working
+		 */
+		_targetPerDay: function (oUser) {
+			var oSchedule = this._oWorkSchedule || this._defaultSchedule();
+			var iWorkingDays = DAYS.filter(function (oDay) {
+				return oSchedule[oDay.schedule] !== "N";
+			}).length || 5;
+			return Math.round(Backend.toMinutes((oUser || {}).targetHrsPerWeek) / iWorkingDays);
+		},
+
+		/**
+		 * @param {object} oData a timesheet response
+		 * @returns {object} minutes of leave and bank holiday, keyed by yyyy-MM-dd. A half
+		 * day's leave is four hours of a day, not the whole of it.
+		 */
+		_absenceMinutes: function (oData) {
+			var mMinutes = {};
+			Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
+				var sDate = Backend.dayKey(oEntry.Date);
+				mMinutes[sDate] = (mMinutes[sDate] || 0) + Backend.toMinutes(oEntry.Hours);
+			});
+			return mMinutes;
 		},
 
 		/**
@@ -273,19 +314,12 @@ sap.ui.define([
 			return Promise.all([this._fetchWeek(oMonday), this._pWorkScheduleLoaded]).then(function (aResults) {
 				var oData = aResults[0];
 				var oUser = oData.user || {};
-				var oSchedule = this._oWorkSchedule || {};
+				var oSchedule = this._oWorkSchedule || this._defaultSchedule();
 
 				this._oWeekTotals = this._weekTotals(oData);
 				oModel.setProperty("/week/status", this._weekStatus(this._oWeekTotals));
-				var mLeave = {};
-				Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).forEach(function (oEntry) {
-					mLeave[Backend.dayKey(oEntry.Date)] = oEntry;
-				});
-
-				var iWorkingDays = DAYS.filter(function (oDay) {
-					return oSchedule[oDay.schedule] !== "N";
-				}).length || 5;
-				var iTargetPerDay = Math.round(Backend.toMinutes(oUser.targetHrsPerWeek) / iWorkingDays);
+				var mAbsence = this._absenceMinutes(oData);
+				var iTargetPerDay = this._targetPerDay(oUser);
 				var sToday = Backend.isoDate(new Date());
 
 				oModel.setProperty("/weekRings", DAYS.map(function (oDay, iIndex) {
@@ -297,7 +331,10 @@ sap.ui.define([
 					// already more than was asked for - but only once there is a target to
 					// be over. Without one (a resource with no weekly hours on record)
 					// nothing can be judged either way, so no day is called overbooked.
-					var iDayTarget = bWorking ? iTargetPerDay : 0;
+					// Leave and bank holidays take their hours off the day's target: half a
+					// day's leave leaves the other half owed, rather than the whole day.
+					var iAbsence = mAbsence[sDate] || 0;
+					var iDayTarget = bWorking ? Math.max(iTargetPerDay - iAbsence, 0) : 0;
 					var bOverbooked = iTargetPerDay > 0 && iBooked > iDayTarget;
 
 					// The ring can never read past a full circle - the control clamps the
@@ -317,7 +354,8 @@ sap.ui.define([
 						? Math.round(iBooked * 100 / iDayTarget) + "%"
 						: (iBooked ? "—" : "0%");
 
-					if (mLeave[sDate]) {
+					// On leave for the whole of it - or on leave at all on a day off.
+					if (iAbsence && !iDayTarget) {
 						return {
 							day: oDay.label,
 							onLeave: true,
@@ -537,16 +575,18 @@ sap.ui.define([
 				var aEntries = [];
 				var iBooked = 0;
 
-				var oLeaveEntry = Backend.countedLeaves(oData.leaves).concat(oData.bankHolidays || []).filter(function (oEntry) {
-					return Backend.dayKey(oEntry.Date) === sDay;
-				})[0];
-				var oSchedule = this._oWorkSchedule || {};
+				var oSchedule = this._oWorkSchedule || this._defaultSchedule();
 				var sScheduleKey = oDay.toLocaleDateString("en-US", { weekday: "long" });
 				var bWorking = oSchedule[sScheduleKey] !== "N";
 
-				oModel.setProperty("/quick/dayEditable", bWorking && !oLeaveEntry);
+				// Only a day the leave covers in full is closed to booking: on a half
+				// day the other half is still to be booked.
+				var iAbsence = this._absenceMinutes(oData)[sDay] || 0;
+				var bFullyAway = iAbsence > 0 && iAbsence >= (this._targetPerDay(oData.user) || iAbsence);
+
+				oModel.setProperty("/quick/dayEditable", bWorking && !bFullyAway);
 				oModel.setProperty("/quick/dayEditableReason",
-					oLeaveEntry ? this.getText("legendOnLeave") : (!bWorking ? this.getText("qtNonWorkingDay") : ""));
+					bFullyAway ? this.getText("legendOnLeave") : (!bWorking ? this.getText("qtNonWorkingDay") : ""));
 
 				aAssignments.forEach(function (oAssignment) {
 					if (!mSeen[oAssignment.ProjectID]) {
