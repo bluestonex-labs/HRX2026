@@ -822,14 +822,14 @@ sap.ui.define([
 
 			var oUser = oModel.getProperty("/user") || {};
 
-			Backend.getJson(Backend.query(Backend.LEAVE, {
-				cmd: "getDates",
+			// With the half-booked days getDates leaves out put back - see Backend.leaveDates.
+			Backend.leaveDates({
 				FromDate: Backend.isoDate(oEvent.getParameter("from")),
 				ToDate: Backend.isoDate(oEvent.getParameter("to")),
 				OrgID: this._sOrgId,
 				SiteID: oUser.siteID || "",
 				EmpID: oUser.empID || ""
-			})).then(function (oData) {
+			}, this._sUserEmail).then(function (oData) {
 				oModel.setProperty("/quickLeave/dates", oData.dates || []);
 				this._updateLeaveDayCount();
 			}.bind(this)).catch(function (oError) {

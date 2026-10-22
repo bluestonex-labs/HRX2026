@@ -608,13 +608,14 @@ sap.ui.define([
 		_loadLeaveDates: function () {
 			var oForm = this.getModel("tcForm").getData();
 
-			return this._getJson(LEAVE_REQS_SERVICE + "?cmd=getDates&" + new URLSearchParams({
+			// With the half-booked days getDates leaves out put back - see Backend.leaveDates.
+			return Backend.leaveDates({
 				FromDate: this._isoDate(oForm.FromDate),
 				ToDate: this._isoDate(oForm.ToDate),
 				OrgID: this._sOrgId,
 				SiteID: oForm.SiteID || "",
 				EmpID: oForm.EmpID
-			}).toString()).then(function (oData) {
+			}, oForm.EmpEmail).then(function (oData) {
 				this.getModel("tc").setProperty("/dates", (oData.dates || []).map(function (oDay) {
 					var sSlot = oDay.availableSlot;
 					return Object.assign({}, oDay, {
