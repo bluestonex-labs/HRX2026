@@ -289,13 +289,15 @@ sap.ui.define([
 			var oForm = this.getModel("mlForm").getData();
 			var oUser = this.getModel("mlView").getProperty("/user") || {};
 
-			return this._getJson(LEAVE_SERVICE + "?cmd=getDates&" + new URLSearchParams({
+			// Backend.leaveDates, not getDates on its own: it puts back the half-booked
+			// days getDates leaves out, so the other half of a day can still be booked.
+			return Backend.leaveDates({
 				FromDate: this._isoDate(oForm.FromDate),
 				ToDate: this._isoDate(oForm.ToDate),
 				OrgID: this._sOrgId,
 				SiteID: oUser.siteID || "",
 				EmpID: oUser.empID || ""
-			}).toString()).then(function (oData) {
+			}, this.getModel("mlView").getProperty("/currentEmail")).then(function (oData) {
 				this.getModel("ml").setProperty("/dates", (oData.dates || []).map(function (oDay) {
 					var sSlot = oDay.availableSlot;
 					return Object.assign({}, oDay, {

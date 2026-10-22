@@ -291,6 +291,83 @@ sap.ui.define([], function () {
 		 * @param {Array<object>} aLeaves the leave entries from the service
 		 * @returns {Array<object>} the entries that really are time off
 		 */
+		/**
+		 * The days in a range that can still be booked as leave, from the leave
+		 * service's getDates - with the half-booked days it leaves out put back.
+		 *
+		 * getDates is meant to return a day with one half already taken with only the
+		 * other half free (availableSlot "AM" or "PM"), and every booking form here is
+		 * built for that. It drops such a day altogether instead, so once the morning
+		 * of a day was booked its afternoon could never be. The person's own leave says
+		 * which half is taken, so the day is offered again with just the free half.
+		 * @param {object} oParams getDates' parameters: FromDate, ToDate, OrgID, SiteID, EmpID
+		 * @param {string} [sEmail] whose leave it is, to read which halves they have taken
+		 * @returns {Promise<object>} the getDates response, its dates in order
+		 */
+		leaveDates: function (oParams, sEmail) {
+			var pDates = this.getJson(this.query(this.LEAVE, Object.assign({ cmd: "getDates" }, oParams)));
+			// Without the person's leave the service's answer stands as it was.
+			var pLeaves = sEmail
+				? this.getJson(this.query(this.LEAVE, { cmd: "fetchUser", Email: sEmail, OrgID: oParams.OrgID }))
+					.then(function (oData) {
+						return oData.availedLeaves || [];
+					}, function () {
+						return [];
+					})
+				: Promise.resolve([]);
+
+			return Promise.all([pDates, pLeaves]).then(function (aResults) {
+				var oData = aResults[0] || {};
+				return Object.assign({}, oData, {
+					dates: this.withFreeHalves(oData.dates || [], aResults[1], oParams.FromDate, oParams.ToDate)
+				});
+			}.bind(this));
+		},
+
+		/**
+		 * @param {Array<object>} aDates the days getDates offered
+		 * @param {Array<object>} aLeaves the person's own leave (Date, Absence, StatusID)
+		 * @param {string} sFrom the first day of the range, yyyy-MM-dd
+		 * @param {string} sTo the last day of the range, yyyy-MM-dd
+		 * @returns {Array<object>} the offered days plus each day in the range with only
+		 * one half taken, offering the other half, in date order
+		 */
+		withFreeHalves: function (aDates, aLeaves, sFrom, sTo) {
+			var mOffered = {};
+			aDates.forEach(function (oDay) {
+				mOffered[oDay.date] = true;
+			});
+
+			var mTaken = {};
+			this.countedLeaves(aLeaves).forEach(function (oLeave) {
+				var sDate = this.dayKey(oLeave.Date);
+				if (!sDate || sDate < sFrom || sDate > sTo || mOffered[sDate]) {
+					return;
+				}
+				var oTaken = mTaken[sDate] = mTaken[sDate] || {};
+				oTaken[oLeave.Absence === "AM" || oLeave.Absence === "PM" ? oLeave.Absence : "Full"] = true;
+			}, this);
+
+			var aFreeHalves = Object.keys(mTaken).filter(function (sDate) {
+				var oTaken = mTaken[sDate];
+				return !oTaken.Full && !!oTaken.AM !== !!oTaken.PM;
+			}).map(function (sDate) {
+				var aParts = sDate.split("-");
+				var oDate = new Date(+aParts[0], +aParts[1] - 1, +aParts[2]);
+				return {
+					date: sDate,
+					displayDate: oDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+					day: oDate.getDay(),
+					dayName: oDate.toLocaleDateString("en-GB", { weekday: "short" }),
+					availableSlot: mTaken[sDate].AM ? "PM" : "AM"
+				};
+			});
+
+			return aDates.concat(aFreeHalves).sort(function (a, b) {
+				return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+			});
+		},
+
 		countedLeaves: function (aLeaves) {
 			return (aLeaves || []).filter(function (oEntry) {
 				return oEntry.StatusID !== "REJ";
